@@ -11,5 +11,7 @@ namespace AttendanceApp.Models
         public string member_id { get; set; }
         public int fingerIndex { get; set; }
         public string templateData { get; set; }
+        public string cardNumber { get; set; }
+        public string userName { get; set; }
     }
 }

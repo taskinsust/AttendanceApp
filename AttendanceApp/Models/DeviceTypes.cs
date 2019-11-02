@@ -15,5 +15,7 @@ namespace AttendanceApp.Models
         public int DeviceId { get; set; }
         public string DeviceName { get; set; }
         public bool IsConDevice { get; set; } = false;
+        //New 
+        public int CommPassword { get; set; }
     }
 }

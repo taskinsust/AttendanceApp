@@ -50,6 +50,7 @@ namespace AttendanceApp
         #region Form Load Methods
         private void InitDevices()
         {
+            //This should come from server side.
             _device = new DeviceTypes
             {
                 DeviceName = "1",
@@ -57,7 +58,8 @@ namespace AttendanceApp
                 Port = Convert.ToInt32(ConfigurationManager.AppSettings["Deviceport"].ToString()),
                 DeviceType = "IN",
                 BranchId = -1,
-                DeviceId = 1
+                DeviceId = 1,
+                CommPassword = 123456
             };
         }
 
@@ -181,56 +183,74 @@ namespace AttendanceApp
 
         #region Click Operations
 
-        private void ActiveUser()
+        private async void ActiveUser()
         {
             btnActive.Enabled = false;
-            var thread = new Thread(async () =>
+            bool isEnabled = true;
+            bool returnResult = false, isExitToDevice = false;
+            //  var thread = new Thread(async () =>
+            //{
+            try
             {
-                try
+                var obj = new Dictionary<string, string>();
+                obj.Add("gymid", Settings.Default.BranchId.ToString());
+                var data = JsonConvert.SerializeObject(obj);
+                var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
+                var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+                using (var client = new HttpClient())
                 {
-                    var obj = new Dictionary<string, string>();
-                    obj.Add("gymid", Settings.Default.BranchId.ToString());
-                    var data = JsonConvert.SerializeObject(obj);
-                    var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
-                    var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
-                    using (var client = new HttpClient())
+                    //var result = await client.PostAsync(new Uri(url), queryString);
+                    //string resultContent = await result.Content.ReadAsStringAsync();
+                    // var res = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent);
+
+                    //For Debug Purpose Only
+                    string resultContent = ServerResponseForActiveUserResponseModel();
+                    var res = JsonConvert.DeserializeObject<List<ActiveUserResponse>>(resultContent);
+                    if (res != null && res.Any())
                     {
-                        var result = await client.PostAsync(new Uri(url), queryString);
-                        string resultContent = await result.Content.ReadAsStringAsync();
-                        var res = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent);
-                        if (res != null && res.Any())
+                        _czkem = new CZKEM();
+                        _czkem.SetCommPassword(_device.CommPassword);
+                        var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+                        if (connect)
+                            _device.IsConDevice = true;
+                        if (_device.IsConDevice)
                         {
-                            _czkem = new CZKEM();
-                            var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                            if (connect)
-                                _device.IsConDevice = true;
-                            if (_device.IsConDevice)
+                            await fillListView("Device connected Successfully.", 0);
+                            foreach (var item in res)
                             {
-                                foreach (var item in res)
+                                //User registered using both Card and Thumb
+                                if (!String.IsNullOrEmpty(item.cardNumber))
                                 {
-                                    if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
+                                    bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
+                                    if (isSet)
                                     {
-                                        var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
+                                        if (isEnabled)
+                                            returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
                                     }
                                 }
-                                await fillListView("Active Users Done Successfully.", 0);
+                                if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
+                                {
+                                    var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
+                                }
                             }
-                        }
-                        else
-                        {
-                            await fillListView("No record found to Active users.", 0);
+                            await fillListView("Active Users Done Successfully.", 0);
                         }
                     }
+                    else
+                    {
+                        await fillListView("No record found to Active users.", 0);
+                    }
                 }
-                catch (Exception)
-                {
+            }
+            catch (Exception)
+            {
 
-                }
-                btnActive.Enabled = true;
-            });
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
+            }
+            btnActive.Enabled = true;
+            //});
+            // thread.IsBackground = true;
+            // thread.SetApartmentState(ApartmentState.STA);
+            // thread.Start();
         }
 
         private void InActiveUser()
@@ -597,5 +617,29 @@ namespace AttendanceApp
             };
             OpenPopUp(attendance);
         }
+
+
+        #region Debug
+
+        private string ServerResponseForActiveUserResponseModel()
+        {
+            var response = new List<ActiveUserResponse>() {
+                new ActiveUserResponse()
+                {
+                    cardNumber="4348805026284589",
+                    member_id="1"
+                }
+            };
+            //var response = new ActiveUserResponse()
+            //{
+            //    cardNumber = "4348805026284589",
+            //    member_id = "1"
+
+            //};
+
+            var result = JsonConvert.SerializeObject(response);
+            return result.ToString();
+        }
+        #endregion
     }
 }
