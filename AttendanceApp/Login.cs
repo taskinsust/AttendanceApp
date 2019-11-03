@@ -26,47 +26,47 @@ namespace AttendanceApp
 
         private async void btnRegister_Click(object sender, EventArgs e)
         {
-            var thread = new Thread(() =>
-            {
-                var log = new Log();
-                Application.Run(log);
-            });
-            thread.Start();
-
-            //if (txtCode.Text.Length > 0 && txtPassword.Text.Length > 0)
+            //var thread = new Thread(() =>
             //{
-            //    using (var client = new HttpClient())
-            //    {
-            //        var obj = new Dictionary<string, string>();
-            //        obj.Add("username", txtCode.Text.Trim());
-            //        obj.Add("password", txtPassword.Text.Trim());
-            //        var data = JsonConvert.SerializeObject(obj);
-            //        var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/login";
-            //        var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
-            //        var result = await client.PostAsync(new Uri(url), queryString);
-            //        string resultContent = await result.Content.ReadAsStringAsync();
-            //        var res = JsonConvert.DeserializeObject<LoginResponse>(resultContent);
-            //        if (res.id != null)
-            //        {
-            //            Settings.Default.BranchId = Convert.ToInt32(res.id);
-            //            Settings.Default.CompanyId = Convert.ToInt32(res.id);
-            //            Settings.Default.Date = DateTime.Now.AddMinutes(-10);
-            //            Settings.Default.Mode = "nutural";
-            //            Settings.Default.Save();
-            //            var thread = new Thread(() =>
-            //            {
-            //                var log = new Log();
-            //                Application.Run(log);
-            //            });
-            //            thread.Start();
-            //            this.Close();
-            //        }
-            //        else
-            //        {
-            //            MessageBox.Show("Login Invalid");
-            //        }
-            //    }
-            //}
+            //    var log = new Log();
+            //    Application.Run(log);
+            //});
+            //thread.Start();
+
+            if (txtCode.Text.Length > 0 && txtPassword.Text.Length > 0)
+            {
+                using (var client = new HttpClient())
+                {
+                    var obj = new Dictionary<string, string>();
+                    obj.Add("username", txtCode.Text.Trim());
+                    obj.Add("password", txtPassword.Text.Trim());
+                    var data = JsonConvert.SerializeObject(obj);
+                    var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/login";
+                    var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+                    var result = await client.PostAsync(new Uri(url), queryString);
+                    string resultContent = await result.Content.ReadAsStringAsync();
+                    var res = JsonConvert.DeserializeObject<LoginResponse>(resultContent);
+                    if (res.id != null)
+                    {
+                        Settings.Default.BranchId = Convert.ToInt32(res.id);
+                        Settings.Default.CompanyId = Convert.ToInt32(res.id);
+                        Settings.Default.Date = DateTime.Now.AddMinutes(-10);
+                        Settings.Default.Mode = "nutural";
+                        Settings.Default.Save();
+                        var thread = new Thread(() =>
+                        {
+                            var log = new Log();
+                            Application.Run(log);
+                        });
+                        thread.Start();
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Login Invalid");
+                    }
+                }
+            }
         }
     }
     

@@ -188,69 +188,69 @@ namespace AttendanceApp
             btnActive.Enabled = false;
             bool isEnabled = true;
             bool returnResult = false, isExitToDevice = false;
-            //  var thread = new Thread(async () =>
-            //{
-            try
-            {
-                var obj = new Dictionary<string, string>();
-                obj.Add("gymid", Settings.Default.BranchId.ToString());
-                var data = JsonConvert.SerializeObject(obj);
-                var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
-                var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
-                using (var client = new HttpClient())
-                {
-                    //var result = await client.PostAsync(new Uri(url), queryString);
-                    //string resultContent = await result.Content.ReadAsStringAsync();
-                    // var res = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent);
+            var thread = new Thread(async () =>
+          {
+              try
+              {
+                  var obj = new Dictionary<string, string>();
+                  obj.Add("gymid", Settings.Default.BranchId.ToString());
+                  var data = JsonConvert.SerializeObject(obj);
+                  var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
+                  var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+                  using (var client = new HttpClient())
+                  {
+                      //var result = await client.PostAsync(new Uri(url), queryString);
+                      //string resultContent = await result.Content.ReadAsStringAsync();
+                      // var res = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent);
 
-                    //For Debug Purpose Only
-                    string resultContent = ServerResponseForActiveUserResponseModel();
-                    var res = JsonConvert.DeserializeObject<List<ActiveUserResponse>>(resultContent);
-                    if (res != null && res.Any())
-                    {
-                        _czkem = new CZKEM();
-                        _czkem.SetCommPassword(_device.CommPassword);
-                        var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                        if (connect)
-                            _device.IsConDevice = true;
-                        if (_device.IsConDevice)
-                        {
-                            await fillListView("Device connected Successfully.", 0);
-                            foreach (var item in res)
-                            {
-                                //User registered using both Card and Thumb
-                                if (!String.IsNullOrEmpty(item.cardNumber))
-                                {
-                                    bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
-                                    if (isSet)
-                                    {
-                                        if (isEnabled)
-                                            returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
-                                    }
-                                }
-                                if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
-                                {
-                                    var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
-                                }
-                            }
-                            await fillListView("Active Users Done Successfully.", 0);
-                        }
-                    }
-                    else
-                    {
-                        await fillListView("No record found to Active users.", 0);
-                    }
-                }
-            }
-            catch (Exception)
-            {
+                      //For Debug Purpose Only
+                      string resultContent = ServerResponseForActiveUserResponseModel();
+                      var res = JsonConvert.DeserializeObject<List<ActiveUserResponse>>(resultContent);
+                      if (res != null && res.Any())
+                      {
+                          _czkem = new CZKEM();
+                          _czkem.SetCommPassword(_device.CommPassword);
+                          var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+                          if (connect)
+                              _device.IsConDevice = true;
+                          if (_device.IsConDevice)
+                          {
+                              await fillListView("Device connected Successfully.", 0);
+                              foreach (var item in res)
+                              {
+                                  //User registered using both Card and Thumb
+                                  if (!String.IsNullOrEmpty(item.cardNumber))
+                                  {
+                                      bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
+                                      if (isSet)
+                                      {
+                                          if (isEnabled)
+                                              returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
+                                      }
+                                  }
+                                  if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
+                                  {
+                                      var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
+                                  }
+                              }
+                              await fillListView("Active Users Done Successfully.", 0);
+                          }
+                      }
+                      else
+                      {
+                          await fillListView("No record found to Active users.", 0);
+                      }
+                  }
+              }
+              catch (Exception)
+              {
 
-            }
-            btnActive.Enabled = true;
-            //});
-            // thread.IsBackground = true;
-            // thread.SetApartmentState(ApartmentState.STA);
-            // thread.Start();
+              }
+              btnActive.Enabled = true;
+          });
+            thread.IsBackground = true;
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
         }
 
         private void InActiveUser()
@@ -330,78 +330,79 @@ namespace AttendanceApp
         private void SyncAttendance()
         {
             btnSyncAttendance.Enabled = false;
-            //  var thread = new Thread(async () => {
-            tblS.Clear();
-            var dates = new List<DateTime>();
-            var strResetTime = string.Empty;
-            var iGLCount = 0;
-            _czkem = new CZKEM();
-            var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-            if (connect)
-                _device.IsConDevice = true;
-            if (_device.IsConDevice)
+            var thread = new Thread(async () =>
             {
-                var readLog = _czkem.ReadAllGLogData(1);
-                if (readLog)
+                tblS.Clear();
+                var dates = new List<DateTime>();
+                var strResetTime = string.Empty;
+                var iGLCount = 0;
+                _czkem = new CZKEM();
+                var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+                if (connect)
+                    _device.IsConDevice = true;
+                if (_device.IsConDevice)
                 {
-                    //int idwErrorCode = 0;
-                    string sdwEnrollNumber = "";
-                    var idwVerifyMode = 0;
-                    var idwInOutMode = 0;
-                    var idwYear = 0;
-                    var idwMonth = 0;
-                    var idwDay = 0;
-                    var idwHour = 0;
-                    var idwMinute = 0;
-                    var idwSecond = 0;
-                    var idwWorkcode = 0;
-                    while (_czkem.SSR_GetGeneralLogData(_device.DeviceId, out sdwEnrollNumber, out idwVerifyMode,
-                                 out idwInOutMode, out idwYear, out idwMonth, out idwDay, out idwHour,
-                                 out idwMinute, out idwSecond, ref idwWorkcode))
+                    var readLog = _czkem.ReadAllGLogData(1);
+                    if (readLog)
                     {
-                        double memberId;
-                        if (Double.TryParse(sdwEnrollNumber, out memberId))
+                        //int idwErrorCode = 0;
+                        string sdwEnrollNumber = "";
+                        var idwVerifyMode = 0;
+                        var idwInOutMode = 0;
+                        var idwYear = 0;
+                        var idwMonth = 0;
+                        var idwDay = 0;
+                        var idwHour = 0;
+                        var idwMinute = 0;
+                        var idwSecond = 0;
+                        var idwWorkcode = 0;
+                        while (_czkem.SSR_GetGeneralLogData(_device.DeviceId, out sdwEnrollNumber, out idwVerifyMode,
+                                     out idwInOutMode, out idwYear, out idwMonth, out idwDay, out idwHour,
+                                     out idwMinute, out idwSecond, ref idwWorkcode))
                         {
-                            iGLCount++;
-                            var date = new DateTime(idwYear, idwMonth, idwDay, idwHour, idwMinute, idwSecond);
-                            var dr = tblS.NewRow();
-                            dr["intEmployeeId"] = sdwEnrollNumber;
-                            dr["dtDate"] = date.ToString();
-                            dr["intInOut"] = idwVerifyMode;
-                            dr["intBranchId"] = _device.BranchId;
-                            if (date >= Settings.Default.Date)
+                            double memberId;
+                            if (Double.TryParse(sdwEnrollNumber, out memberId))
                             {
-                                if (string.IsNullOrEmpty(strResetTime))
+                                iGLCount++;
+                                var date = new DateTime(idwYear, idwMonth, idwDay, idwHour, idwMinute, idwSecond);
+                                var dr = tblS.NewRow();
+                                dr["intEmployeeId"] = sdwEnrollNumber;
+                                dr["dtDate"] = date.ToString();
+                                dr["intInOut"] = idwVerifyMode;
+                                dr["intBranchId"] = _device.BranchId;
+                                if (date >= Settings.Default.Date)
                                 {
-                                    strResetTime = date.ToString();
+                                    if (string.IsNullOrEmpty(strResetTime))
+                                    {
+                                        strResetTime = date.ToString();
+                                    }
+                                    tblS.Rows.Add(dr);
+                                    dates.Add(date);
                                 }
-                                tblS.Rows.Add(dr);
-                                dates.Add(date);
                             }
                         }
+                        if (string.IsNullOrEmpty(strResetTime))
+                        {
+                            strResetTime = Settings.Default.Date.ToString();
+                        }
+                        if (dates.Any())
+                        {
+                            Settings.Default.Date = dates.OrderByDescending(x => x).First();
+                        }
+                        //await fillListView("Starting from " + strResetTime + " Compare To " + Settings.Default.Date, 0);
+                        //fillListView("fetched In", iGLCount);
+                        SaveSyncData(tblS);
                     }
-                    if (string.IsNullOrEmpty(strResetTime))
+                    else
                     {
-                        strResetTime = Settings.Default.Date.ToString();
+                        //await fillListView("No data found from device to sync.", 0);
+                        btnSyncAttendance.Enabled = true;
                     }
-                    if (dates.Any())
-                    {
-                        Settings.Default.Date = dates.OrderByDescending(x => x).First();
-                    }
-                    //await fillListView("Starting from " + strResetTime + " Compare To " + Settings.Default.Date, 0);
-                    //fillListView("fetched In", iGLCount);
-                    SaveSyncData(tblS);
                 }
-                else
-                {
-                    //await fillListView("No data found from device to sync.", 0);
-                    btnSyncAttendance.Enabled = true;
-                }
-            }
-            // });
-            // thread.IsBackground = true;
-            // thread.SetApartmentState(ApartmentState.STA);
-            // thread.Start();
+            });
+            thread.IsBackground = true;
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
         }
 
         #endregion
@@ -626,7 +627,7 @@ namespace AttendanceApp
             var response = new List<ActiveUserResponse>() {
                 new ActiveUserResponse()
                 {
-                    cardNumber="4348805026284589",
+                    cardNumber=ConfigurationManager.AppSettings["cardNo"].ToString(),
                     member_id="1"
                 }
             };
