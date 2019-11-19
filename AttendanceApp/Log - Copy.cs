@@ -1,8 +1,6 @@
 ﻿using AttendanceApp.Helper;
 using AttendanceApp.Models;
 using AttendanceApp.Properties;
-using AttendanceApp.Services;
-using log4net;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -29,10 +27,7 @@ namespace AttendanceApp
         public DateTime fetchTime { get; set; } = new DateTime(1999, 1, 1, 0, 0, 0);
         public DataTable tblS { get; set; } = new DataTable();
         public Timer myTimer { get; set; } = new Timer();
-        private MessageCleared _messageCleared;
-        private Synchronization syncThread = null;
 
-        private static readonly ILog serviceLog = LogManager.GetLogger("ServiceLogger");
         #region Events and delegate
 
         private delegate void UpdateListViewInvoker(string message, MessageType messageType);
@@ -48,13 +43,12 @@ namespace AttendanceApp
 
         private void Log_Load(object sender, EventArgs e)
         {
-            //Control.CheckForIllegalCrossThreadCalls = false;
+            Control.CheckForIllegalCrossThreadCalls = false;
             InitDevices();
-            this.btnActive.PerformClick();
-            //OnVerifyThumb();
-            //DefineTblsFields();
-            ////RefreshUserAndData();
-            //refreshUsersAndData.Start();
+            OnVerifyThumb();
+            DefineTblsFields();
+            //RefreshUserAndData();
+            refreshUsersAndData.Start();
 
             //myTimer.Interval = 10 * 1000;
             //myTimer.Start();
@@ -127,77 +121,18 @@ namespace AttendanceApp
             btnDeActive.Enabled = true;
             btnSyncAttendance.Enabled = true;
             btnDeleteAttendanceLog.Enabled = true;
-            OnGuiMessaging("Active Button has pressed", MessageType.Info);
-            if (syncThread == null)
-            {
-                //for the first time
-                AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
-                attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
-                attendanceDeviceModel.IPAddress = _device.DeviceIp;
-                attendanceDeviceModel.Port = _device.Port;
-                attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
-                attendanceDeviceModel.Id = _device.DeviceId;
 
-                syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-                syncThread.Start();
-            }
-            else if (syncThread._syncStatus.IsRunning)
-            {
-                //Stop service first
-                OnGuiMessaging("Backend Process running.", MessageType.Info);
-            }
-            else
-            {
-                //just restart 
-                //_messageCleared();
-                syncThread.Restart();
-            }
-            // ActiveUser();
+            ActiveUser();
         }
 
         private void btnDeActive_Click(object sender, EventArgs e)
         {
-            btnActive.Enabled = true;
-            btnDeActive.Enabled = false;
-            btnSyncAttendance.Enabled = true;
-            btnDeleteAttendanceLog.Enabled = true;
-
-            OnGuiMessaging("InActive Button has pressed", MessageType.Info);
-
-            AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
-            attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
-            attendanceDeviceModel.IPAddress = _device.DeviceIp;
-            attendanceDeviceModel.Port = _device.Port;
-            attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
-            attendanceDeviceModel.Id = _device.DeviceId;
-
-            syncThread = null;
-            syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-            syncThread.StartInActiveUser();
-            //InActiveUser();
+            InActiveUser();
         }
 
         private void btnSyncAttendance_Click(object sender, EventArgs e)
         {
-            btnActive.Enabled = true;
-            btnDeActive.Enabled = true;
-            btnSyncAttendance.Enabled = false;
-            btnDeleteAttendanceLog.Enabled = true;
-
-            OnGuiMessaging("SyncAttendance Button has pressed", MessageType.Info);
-
-            AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
-            attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
-            attendanceDeviceModel.IPAddress = _device.DeviceIp;
-            attendanceDeviceModel.Port = _device.Port;
-            attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
-            attendanceDeviceModel.Id = _device.DeviceId;
-
-            syncThread = null;
-            syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-            syncThread.StartSyncAttendance();
-
-            //SyncAttendance();
+            SyncAttendance();
         }
 
         private void btnDeleteAttendanceLog_Click(object sender, EventArgs e)
@@ -298,19 +233,19 @@ namespace AttendanceApp
                               foreach (var item in res)
                               {
                                   //User registered using both Card and Thumb
-                                  if (!String.IsNullOrEmpty(item.cardNumber))
-                                  {
-                                      bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
-                                      if (isSet)
-                                      {
-                                          if (isEnabled)
-                                              returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
-                                      }
-                                  }
-                                  if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
-                                  {
-                                      var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
-                                  }
+                                  //if (!String.IsNullOrEmpty(item.cardNumber))
+                                  //{
+                                  //    bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
+                                  //    if (isSet)
+                                  //    {
+                                  //        if (isEnabled)
+                                  //            returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
+                                  //    }
+                                  //}
+                                  //if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
+                                  //{
+                                  //    var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
+                                  //}
                               }
                               await fillListView("Active Users Done Successfully.", 0);
                           }
@@ -360,36 +295,36 @@ namespace AttendanceApp
                             string sTmpData = string.Empty;
                             int iTmpLength = 0, iFlag = 0;
 
-                            foreach (var item in res)
-                            {
-                                for (int i = 0; i <= 9; i++)
-                                {
-                                    if (_czkem.GetUserTmpExStr(_device.DeviceId, item.id, i, out iFlag, out sTmpData, out iTmpLength))
-                                    {
-                                        var sendData = new SaveApiTemplate
-                                        {
-                                            gymid = Settings.Default.BranchId,
-                                            BackUpTemplate = new List<BackUpTemplate>
-                                            {
-                                                new BackUpTemplate
-                                                {
-                                                    name = "",
-                                                    member_id = item.id,
-                                                    Password = "",
-                                                    prvlg = 1,
-                                                    enabled = 1,
-                                                    fingerIndex = i,
-                                                    flag = iFlag,
-                                                    templateData = sTmpData
+                            //foreach (var item in res)
+                            //{
+                            //    for (int i = 0; i <= 9; i++)
+                            //    {
+                            //        if (_czkem.GetUserTmpExStr(_device.DeviceId, item.id, i, out iFlag, out sTmpData, out iTmpLength))
+                            //        {
+                            //            var sendData = new SaveApiTemplate
+                            //            {
+                            //                gymid = Settings.Default.BranchId,
+                            //                BackUpTemplate = new List<BackUpTemplate>
+                            //                {
+                            //                    new BackUpTemplate
+                            //                    {
+                            //                        name = "",
+                            //                        member_id = item.id,
+                            //                        Password = "",
+                            //                        prvlg = 1,
+                            //                        enabled = 1,
+                            //                        fingerIndex = i,
+                            //                        flag = iFlag,
+                            //                        templateData = sTmpData
 
-                                                }
-                                            }
-                                        };
-                                        SendTemplateBackUpToAPI(sendData);
-                                        _czkem.SSR_DelUserTmp(_device.DeviceId, item.id, i);
-                                    }
-                                }
-                            }
+                            //                    }
+                            //                }
+                            //            };
+                            //            SendTemplateBackUpToAPI(sendData);
+                            //            _czkem.SSR_DelUserTmp(_device.DeviceId, item.id, i);
+                            //        }
+                            //    }
+                            //}
                         }
 
                         await fillListView("In-Active Users Done Successfully", 0);
@@ -499,7 +434,7 @@ namespace AttendanceApp
                 var imgList = new ImageList();
                 imgList.Images.Add(Resources.success);
                 imgList.Images.Add(Resources.error);
-                //gridLogDetailsView.SmallImageList = imgList;
+                gridLogDetailsView.SmallImageList = imgList;
                 if (param.act == "error")
                 {
                     item1.Text = "Error";
@@ -518,7 +453,7 @@ namespace AttendanceApp
                     item1.SubItems.Add(param.ex2);
                     item1.ImageIndex = 0;
                 }
-                //gridLogDetailsView.Items.Insert(0, item1);
+                gridLogDetailsView.Items.Insert(0, item1);
                 //Application.Run();
             });
             var obj = new FillListViewModel
@@ -536,32 +471,31 @@ namespace AttendanceApp
         {
             try
             {
-                if (currentStatedataGridView.InvokeRequired)
+                if (gridLogDetailsView.InvokeRequired)
                 {
                     var me = new ClearListViewInvoker(OnMessageCleared);
-                    currentStatedataGridView.Invoke(me);
+                    gridLogDetailsView.Invoke(me);
                 }
                 else
                 {
-                    currentStatedataGridView.Rows.Clear();
-                    currentStatedataGridView.Refresh();
+                    gridLogDetailsView.Rows.Clear();
+                    gridLogDetailsView.Refresh();
                 }
             }
             catch (Exception ex)
             {
-
+                
             }
         }
 
-        private void OnGuiMessaging(string message, MessageType messageType)
+        private void OnGuiMessaging(string message, MessageType messageType, string act, int total, string ex2 = "")
         {
             try
             {
-                _count++;
-                if (currentStatedataGridView.InvokeRequired)
+                if (gridLogDetailsView.InvokeRequired)
                 {
                     var mi = new UpdateListViewInvoker(OnGuiMessaging);
-                    currentStatedataGridView.Invoke(mi, message, messageType);
+                    gridLogDetailsView.Invoke(mi, message, messageType);
                 }
                 else
                 {
@@ -576,19 +510,44 @@ namespace AttendanceApp
                     else if (messageType == MessageType.Important)
                         rowColor = Color.LightSkyBlue;
 
+                    var item1 = new ListViewItem();
+                    _count++;
+                    var imgList = new ImageList();
+                    imgList.Images.Add(Resources.success);
+                    imgList.Images.Add(Resources.error);
+                    gridLogDetailsView.SmallImageList = imgList;
+                    if (param.act == "error")
+                    {
+                        item1.Text = "Error";
+                        item1.SubItems.Add(_count.ToString());
+                        item1.SubItems.Add("Error Occured");
+                        item1.SubItems.Add(DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt"));
+                        item1.SubItems.Add(param.ex2);
+                        item1.ImageIndex = 1;
+                    }
+                    else
+                    {
+                        item1.Text = "Success";
+                        item1.SubItems.Add(_count.ToString());
+                        item1.SubItems.Add(param.act);
+                        item1.SubItems.Add(DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt"));
+                        item1.SubItems.Add(param.ex2);
+                        item1.ImageIndex = 0;
+                    }
+
                     //add row
-                    string[] rowData = new string[] { _count.ToString(), message, DateTime.Now.ToString(BusinessRules.DateTimeFormat), messageType.ToString() };
-                    currentStatedataGridView.Rows.Insert(0, rowData);
-                    currentStatedataGridView.Rows[0].DefaultCellStyle.BackColor = rowColor;
+                    string[] rowData = new string[] { DateTime.Now.ToString(BusinessRules.DateTimeFormat), message };
+                    gridLogDetailsView.Items.Insert(0, rowData);
+                    gridLogDetailsView.Rows[0].DefaultCellStyle.BackColor = rowColor;
 
                     //clear
-                    if (currentStatedataGridView.Rows.Count > 20000)
+                    if (gridLogDetailsView.Rows.Count > 20000)
                         _messageCleared();
                 }
             }
             catch (Exception ex)
             {
-
+                Log.Error(ex);
             }
         }
 

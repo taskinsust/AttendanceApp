@@ -17,5 +17,6 @@ namespace AttendanceApp.Models
         public bool IsConDevice { get; set; } = false;
         //New 
         public int CommPassword { get; set; }
+        public List<ActiveUserResponse> TeamMembers { get; set; }
     }
 }

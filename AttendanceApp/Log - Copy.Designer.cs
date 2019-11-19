@@ -29,7 +29,19 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
+            ""}, -1, System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Window, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134))));
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
+            ""}, -1, System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Window, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134))));
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
+            ""}, -1, System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Window, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134))));
             this.btnLogOut = new System.Windows.Forms.Button();
+            this.ColumnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.gridLogDetailsView = new System.Windows.Forms.ListView();
+            this.ColumnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ColumnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ColumnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ColumnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.cmdUsbGlog = new System.Windows.Forms.Button();
             this.cmdUsbSLog = new System.Windows.Forms.Button();
             this.cmdEmptyGLogData = new System.Windows.Forms.Button();
@@ -41,18 +53,12 @@
             this.lblTime = new System.Windows.Forms.Label();
             this.Label7 = new System.Windows.Forms.Label();
             this.lblActions = new System.Windows.Forms.Label();
-            this.refreshUsersAndData = new System.Windows.Forms.Timer(this.components);
-            this.currentStatedataGridView = new System.Windows.Forms.DataGridView();
             this.btnDeleteAttendanceLog = new System.Windows.Forms.Button();
             this.btnSyncAttendance = new System.Windows.Forms.Button();
             this.btnDeActive = new System.Windows.Forms.Button();
             this.btnActive = new System.Windows.Forms.Button();
-            this.sr = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LogDetails = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.CurrentDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.refreshUsersAndData = new System.Windows.Forms.Timer(this.components);
             this.GroupBox1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.currentStatedataGridView)).BeginInit();
             this.SuspendLayout();
             // 
             // btnLogOut
@@ -67,6 +73,58 @@
             this.btnLogOut.Text = "Log Out";
             this.btnLogOut.UseVisualStyleBackColor = false;
             this.btnLogOut.Click += new System.EventHandler(this.btnLogOut_Click);
+            // 
+            // ColumnHeader5
+            // 
+            this.ColumnHeader5.Text = "Errors";
+            this.ColumnHeader5.Width = 0;
+            // 
+            // gridLogDetailsView
+            // 
+            this.gridLogDetailsView.BackColor = System.Drawing.Color.White;
+            this.gridLogDetailsView.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.gridLogDetailsView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.ColumnHeader3,
+            this.ColumnHeader4,
+            this.ColumnHeader1,
+            this.ColumnHeader2,
+            this.ColumnHeader5});
+            this.gridLogDetailsView.FullRowSelect = true;
+            this.gridLogDetailsView.GridLines = true;
+            this.gridLogDetailsView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
+            listViewItem1,
+            listViewItem2,
+            listViewItem3});
+            this.gridLogDetailsView.Location = new System.Drawing.Point(3, 128);
+            this.gridLogDetailsView.MultiSelect = false;
+            this.gridLogDetailsView.Name = "gridLogDetailsView";
+            this.gridLogDetailsView.Size = new System.Drawing.Size(967, 380);
+            this.gridLogDetailsView.TabIndex = 72;
+            this.gridLogDetailsView.UseCompatibleStateImageBehavior = false;
+            this.gridLogDetailsView.View = System.Windows.Forms.View.Details;
+            // 
+            // ColumnHeader3
+            // 
+            this.ColumnHeader3.DisplayIndex = 3;
+            this.ColumnHeader3.Text = "Status";
+            this.ColumnHeader3.Width = 100;
+            // 
+            // ColumnHeader4
+            // 
+            this.ColumnHeader4.DisplayIndex = 0;
+            this.ColumnHeader4.Text = "Sr #";
+            // 
+            // ColumnHeader1
+            // 
+            this.ColumnHeader1.DisplayIndex = 1;
+            this.ColumnHeader1.Text = "Log Details";
+            this.ColumnHeader1.Width = 630;
+            // 
+            // ColumnHeader2
+            // 
+            this.ColumnHeader2.DisplayIndex = 2;
+            this.ColumnHeader2.Text = "Date & Time";
+            this.ColumnHeader2.Width = 150;
             // 
             // cmdUsbGlog
             // 
@@ -221,24 +279,6 @@
             this.lblActions.TabIndex = 32;
             this.lblActions.Text = "Actions ";
             // 
-            // refreshUsersAndData
-            // 
-            this.refreshUsersAndData.Interval = 900000;
-            this.refreshUsersAndData.Tick += new System.EventHandler(this.refreshUsersAndData_Tick);
-            // 
-            // currentStatedataGridView
-            // 
-            this.currentStatedataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.currentStatedataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.sr,
-            this.LogDetails,
-            this.CurrentDate,
-            this.Status});
-            this.currentStatedataGridView.Location = new System.Drawing.Point(2, 128);
-            this.currentStatedataGridView.Name = "currentStatedataGridView";
-            this.currentStatedataGridView.Size = new System.Drawing.Size(968, 384);
-            this.currentStatedataGridView.TabIndex = 89;
-            // 
             // btnDeleteAttendanceLog
             // 
             this.btnDeleteAttendanceLog.BackColor = System.Drawing.Color.Crimson;
@@ -297,38 +337,22 @@
             this.btnActive.UseVisualStyleBackColor = false;
             this.btnActive.Click += new System.EventHandler(this.btnActive_Click);
             // 
-            // sr
+            // refreshUsersAndData
             // 
-            this.sr.HeaderText = "Sr #";
-            this.sr.Name = "sr";
-            // 
-            // LogDetails
-            // 
-            this.LogDetails.HeaderText = "Log Details";
-            this.LogDetails.Name = "LogDetails";
-            this.LogDetails.Width = 500;
-            // 
-            // CurrentDate
-            // 
-            this.CurrentDate.HeaderText = "Date & Time";
-            this.CurrentDate.Name = "CurrentDate";
-            // 
-            // Status
-            // 
-            this.Status.HeaderText = "Status";
-            this.Status.Name = "Status";
+            this.refreshUsersAndData.Interval = 900000;
+            this.refreshUsersAndData.Tick += new System.EventHandler(this.refreshUsersAndData_Tick);
             // 
             // Log
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(974, 514);
-            this.Controls.Add(this.currentStatedataGridView);
             this.Controls.Add(this.btnDeleteAttendanceLog);
             this.Controls.Add(this.btnSyncAttendance);
             this.Controls.Add(this.btnDeActive);
             this.Controls.Add(this.btnActive);
             this.Controls.Add(this.btnLogOut);
+            this.Controls.Add(this.gridLogDetailsView);
             this.Controls.Add(this.cmdUsbGlog);
             this.Controls.Add(this.cmdUsbSLog);
             this.Controls.Add(this.cmdEmptyGLogData);
@@ -341,7 +365,6 @@
             this.Load += new System.EventHandler(this.Log_Load);
             this.GroupBox1.ResumeLayout(false);
             this.GroupBox1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.currentStatedataGridView)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -353,6 +376,12 @@
         internal System.Windows.Forms.Button btnDeActive;
         internal System.Windows.Forms.Button btnActive;
         internal System.Windows.Forms.Button btnLogOut;
+        internal System.Windows.Forms.ColumnHeader ColumnHeader5;
+        internal System.Windows.Forms.ListView gridLogDetailsView;
+        internal System.Windows.Forms.ColumnHeader ColumnHeader3;
+        internal System.Windows.Forms.ColumnHeader ColumnHeader4;
+        internal System.Windows.Forms.ColumnHeader ColumnHeader1;
+        internal System.Windows.Forms.ColumnHeader ColumnHeader2;
         public System.Windows.Forms.Button cmdUsbGlog;
         public System.Windows.Forms.Button cmdUsbSLog;
         public System.Windows.Forms.Button cmdEmptyGLogData;
@@ -365,10 +394,5 @@
         internal System.Windows.Forms.Label Label7;
         internal System.Windows.Forms.Label lblActions;
         private System.Windows.Forms.Timer refreshUsersAndData;
-        private System.Windows.Forms.DataGridView currentStatedataGridView;
-        private System.Windows.Forms.DataGridViewTextBoxColumn sr;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LogDetails;
-        private System.Windows.Forms.DataGridViewTextBoxColumn CurrentDate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Status;
     }
 }
