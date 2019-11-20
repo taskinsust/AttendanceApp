@@ -224,7 +224,7 @@
             // refreshUsersAndData
             // 
             this.refreshUsersAndData.Interval = 900000;
-            //this.refreshUsersAndData.Tick += new System.EventHandler(this.refreshUsersAndData_Tick);
+            this.refreshUsersAndData.Tick += new System.EventHandler(this.refreshUsersAndData_Tick);
             // 
             // currentStatedataGridView
             // 
@@ -236,7 +236,7 @@
             this.Status});
             this.currentStatedataGridView.Location = new System.Drawing.Point(2, 128);
             this.currentStatedataGridView.Name = "currentStatedataGridView";
-            this.currentStatedataGridView.Size = new System.Drawing.Size(968, 400);
+            this.currentStatedataGridView.Size = new System.Drawing.Size(968, 384);
             this.currentStatedataGridView.TabIndex = 89;
             // 
             // btnDeleteAttendanceLog
@@ -299,25 +299,22 @@
             // 
             // sr
             // 
-            this.sr.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.sr.HeaderText = "Sr #";
             this.sr.Name = "sr";
             // 
             // LogDetails
             // 
-            this.LogDetails.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.LogDetails.HeaderText = "Log Details";
             this.LogDetails.Name = "LogDetails";
+            this.LogDetails.Width = 500;
             // 
             // CurrentDate
             // 
-            this.CurrentDate.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.CurrentDate.HeaderText = "Date & Time";
             this.CurrentDate.Name = "CurrentDate";
             // 
             // Status
             // 
-            this.Status.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.Status.HeaderText = "Status";
             this.Status.Name = "Status";
             // 

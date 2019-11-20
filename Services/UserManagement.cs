@@ -17,8 +17,6 @@ namespace AttendanceApp.Services
         private static readonly ILog serviceLog = LogManager.GetLogger("ServiceLogger");
         private readonly AttendanceDeviceModel _attendanceDevice;
         public readonly ServiceStatus _serviceStatus;
-        public readonly SyncStatus _syncStatus;
-
         private MessagePass ThrowMessage;
         private IAttendanceDeviceDriver _attendanceDeviceDriver;
 
@@ -26,12 +24,11 @@ namespace AttendanceApp.Services
 
         #region Constructor
 
-        public UserManagement(AttendanceDeviceModel attendanceDevice, IAttendanceDeviceDriver attendanceDeviceDriver, ServiceStatus serviceStatus, SyncStatus syncStatus, MessagePass throwMessage)
+        public UserManagement(AttendanceDeviceModel attendanceDevice, IAttendanceDeviceDriver attendanceDeviceDriver, ServiceStatus serviceStatus, MessagePass throwMessage)
         {
             this._attendanceDevice = attendanceDevice;
             this._attendanceDeviceDriver = attendanceDeviceDriver;
             this._serviceStatus = serviceStatus;
-            this._syncStatus = syncStatus;
             this.ThrowMessage = throwMessage;
         }
 
@@ -59,7 +56,7 @@ namespace AttendanceApp.Services
                 //User add
                 foreach (var memberViewModel in _attendanceDevice.TeamMembers)
                 {
-                    if (_syncStatus.IsRunning == false)
+                    if (_serviceStatus.IsRunning == false)
                         return false;
 
                     var isSuccess = _attendanceDeviceDriver.SaveToDevice(memberViewModel, false);
@@ -76,7 +73,7 @@ namespace AttendanceApp.Services
             }
             catch (Exception ex)
             {
-                serviceLog.Error(ex);
+                //Log.Error(ex);
                 return false;
             }
         }
@@ -96,7 +93,10 @@ namespace AttendanceApp.Services
                     {
                         OnThrowingMessage("Member " + item + " operation completed ", MessageType.Success);
                     }
+<<<<<<< HEAD
+=======
                     else OnThrowingMessage("Member " + item + " operation not valid! Either member does not exit in device or device connection issues ", MessageType.Attention);
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                 }
 
                 //Refresh data at device
@@ -106,7 +106,7 @@ namespace AttendanceApp.Services
             }
             catch (Exception ex)
             {
-                serviceLog.Error(ex);
+                //Log.Error(ex);
                 return false;
             }
         }

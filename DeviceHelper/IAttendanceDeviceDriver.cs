@@ -15,7 +15,6 @@ namespace AttendanceApp.DeviceHelper
         void ProcessLogList();
         bool IsAttendanceLogExits();
         bool ClearLog();
-        bool ClearAttdLog();
         bool OpenConnection(bool isDeviceLock = true);
         void CloseConnection();
         void RefreshData();

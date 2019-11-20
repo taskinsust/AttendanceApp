@@ -24,7 +24,7 @@ namespace AttendanceApp.DeviceHelper
             this._attendanceDevice = attendanceDevice;
             this._throwMessage = throwMessage;
             axDevice = new CZKEM();
-
+            
         }
 
         #endregion
@@ -276,15 +276,6 @@ namespace AttendanceApp.DeviceHelper
                 serviceLog.Error(ex);
                 return false;
             }
-        }
-
-        public bool ClearAttdLog()
-        {
-            OnThrowingMessage("Clearing Attendance data", MessageType.Info);
-
-            //Clear Attendance Data
-            bool isSuccess = AxDevice.ClearData(_attendanceDevice.MachineNo, 1);
-            return isSuccess;
         }
 
         #endregion

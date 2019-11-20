@@ -56,7 +56,10 @@ namespace AttendanceApp.Services
                 {
                     _attendanceDeviceDriver.ProcessLogList();
                 }
+<<<<<<< HEAD
+=======
                 _attendanceDeviceDriver.CloseConnection();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                 OnThrowingMessage("Attendance sync successfully completed ", MessageType.Success);
             }
             catch (Exception e)
@@ -64,11 +67,6 @@ namespace AttendanceApp.Services
                 OnThrowingMessage("Unable to sync attendance data ", MessageType.Error);
                 //Log.Error(e);
             }
-        }
-
-        internal void DeleteAttendance()
-        {
-            _attendanceDeviceDriver.ClearAttdLog();
         }
 
         #endregion

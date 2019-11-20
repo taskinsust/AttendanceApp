@@ -20,15 +20,18 @@ namespace AttendanceApp.Services
 {
     public class Synchronization
     {
-        private Thread _activeThread;
+        private Thread _deviceSynchronizerThread;
         private Thread _inactiveThread;
         private Thread _SyncThread;
         private Thread _deleteDataThread;
 
         IAttendanceDeviceDriver attendanceDeviceDriver = null;
         public volatile ServiceStatus _serviceStatus;
+<<<<<<< HEAD
+=======
         public volatile SyncStatus _syncStatus;
 
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
         public volatile bool InternetAvailable = false;
         private const int ThreadJoiningTime = 10 * 1000;
         private int _serverCallingTimeInterval = 30;
@@ -39,11 +42,13 @@ namespace AttendanceApp.Services
         private AttendanceDeviceModel _attendanceDeviceModel;
         private static readonly ILog serviceLog = LogManager.GetLogger("ServiceLogger");
 
-        public Synchronization(ServiceDelegate.DeviceSynchronizedEventHandler throwMessage,
-            AttendanceDeviceModel attendanceDeviceModel)
+        public Synchronization(ServiceDelegate.DeviceSynchronizedEventHandler throwMessage, AttendanceDeviceModel attendanceDeviceModel)
         {
             _serviceStatus = new ServiceStatus();
+<<<<<<< HEAD
+=======
             _syncStatus = new SyncStatus();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
             _attendanceDeviceModel = attendanceDeviceModel;
             _throwMessage = throwMessage;
         }
@@ -66,16 +71,20 @@ namespace AttendanceApp.Services
         {
             try
             {
-                if (_activeThread != null && _activeThread.IsAlive)
+                if (_deviceSynchronizerThread != null && _deviceSynchronizerThread.IsAlive)
                 {
                     OnThrowingMessage("Program already running Please stop it first", MessageType.Info);
                 }
                 else
                 {
+<<<<<<< HEAD
+                    _serviceStatus.IsRunning = true;
+=======
                     _syncStatus.IsRunning = true;
-                    _activeThread = new System.Threading.Thread(DeviceSync);
-                    _activeThread.SetApartmentState(ApartmentState.STA);
-                    _activeThread.Start();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
+                    _deviceSynchronizerThread = new System.Threading.Thread(DeviceSync);
+                    _deviceSynchronizerThread.SetApartmentState(ApartmentState.STA);
+                    _deviceSynchronizerThread.Start();
                 }
             }
 
@@ -91,8 +100,11 @@ namespace AttendanceApp.Services
             try
             {
                 _serviceStatus.IsRunning = false;
+<<<<<<< HEAD
+=======
 
-                _activeThread.Join();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
+                _deviceSynchronizerThread.Join();
                 _inactiveThread.Join();
                 _SyncThread.Join();
                 _deleteDataThread.Join();
@@ -117,6 +129,12 @@ namespace AttendanceApp.Services
             try
             {
                 _serviceStatus.IsRunning = false;
+<<<<<<< HEAD
+                _deviceSynchronizerThread.Join(ThreadJoiningTime);
+                _inactiveThread.Join(ThreadJoiningTime);
+                _SyncThread.Join(ThreadJoiningTime);
+                _deleteDataThread.Join(ThreadJoiningTime);
+=======
                 _syncStatus.IsRunning = false;
 
                 //if (_deviceSynchronizerThread.IsAlive)
@@ -127,6 +145,7 @@ namespace AttendanceApp.Services
                 //    _SyncThread.Join();
                 //if (_deleteDataThread.IsAlive)
                 //    _deleteDataThread.Join();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                 Start();
             }
             catch (Exception ex)
@@ -143,19 +162,29 @@ namespace AttendanceApp.Services
                 _serviceStatus.IsRunning = false;
                 try
                 {
+<<<<<<< HEAD
+                    _deviceSynchronizerThread.Join();
+                    _SyncThread.Join();
+                    _deleteDataThread.Join();
+=======
                     //if (_deviceSynchronizerThread.IsAlive)
                     //    _deviceSynchronizerThread.Join();
                     if (_SyncThread.IsAlive)
                         _SyncThread.Join();
                     if (_deleteDataThread.IsAlive)
                         _deleteDataThread.Join();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                 }
                 catch
                 {
                 }
                 finally
                 {
+<<<<<<< HEAD
+                    _deviceSynchronizerThread = null;
+=======
                     //_deviceSynchronizerThread = null;
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                     _SyncThread = null;
                     _deleteDataThread = null;
                 }
@@ -182,63 +211,46 @@ namespace AttendanceApp.Services
                 _serviceStatus.IsRunning = false;
                 try
                 {
+<<<<<<< HEAD
+                    _deviceSynchronizerThread.Join();
+                    _inactiveThread.Join();
+                    _deleteDataThread.Join();
+=======
                     //if (_deviceSynchronizerThread.IsAlive)
                     //    _deviceSynchronizerThread.Join();
                     if (_inactiveThread.IsAlive)
                         _inactiveThread.Join();
                     if (_deleteDataThread.IsAlive)
                         _deleteDataThread.Join();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                 }
                 catch
                 {
                 }
                 finally
                 {
+<<<<<<< HEAD
+                    _deviceSynchronizerThread = null;
+=======
                     //_deviceSynchronizerThread = null;
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                     _inactiveThread = null;
                     _deleteDataThread = null;
                 }
 
+<<<<<<< HEAD
+                Thread.Sleep(2000);
+
+=======
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
                 _serviceStatus.IsRunning = true;
                 _SyncThread = new System.Threading.Thread(SyncAttendance);
                 _SyncThread.SetApartmentState(ApartmentState.STA);
                 _SyncThread.Start();
+<<<<<<< HEAD
+=======
 
-            }
-
-            catch (Exception ex)
-            {
-                serviceLog.Error("Could not start ", ex);
-                OnThrowingMessage("Service fails to start due to " + ex.Message, MessageType.Error);
-            }
-        }
-
-        internal void StartDeleteAttendance()
-        {
-            try
-            {
-                _serviceStatus.IsRunning = false;
-                try
-                {
-                    if (_inactiveThread.IsAlive)
-                        _inactiveThread.Join();
-                    if (_SyncThread.IsAlive)
-                        _SyncThread.Join();            
-                }
-                catch
-                {
-                }
-                finally
-                {
-                    //_deviceSynchronizerThread = null;
-                    _inactiveThread = null;
-                    _SyncThread = null;
-                }
-
-                _serviceStatus.IsRunning = true;
-                _deleteDataThread = new System.Threading.Thread(DeleteAttendance);
-                _deleteDataThread.SetApartmentState(ApartmentState.STA);
-                _deleteDataThread.Start();
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
             }
 
             catch (Exception ex)
@@ -251,7 +263,11 @@ namespace AttendanceApp.Services
         private void SafeSleep(int second)
         {
             int currentSec = 0;
+<<<<<<< HEAD
+            while (_serviceStatus.IsRunning && currentSec < second)
+=======
             while (_syncStatus.IsRunning && currentSec < second)
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
             {
                 currentSec++;
                 Thread.Sleep(1000);
@@ -262,26 +278,108 @@ namespace AttendanceApp.Services
 
         #region Operation
 
+<<<<<<< HEAD
+        private async void InActiveUser()
+        {
+            if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+                return;
+
+            while (_serviceStatus.IsRunning)
+            {
+                var obj = new Dictionary<string, string>();
+                obj.Add("gymid", Settings.Default.BranchId.ToString());
+                var data = JsonConvert.SerializeObject(obj);
+                var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/GetInactiveMembers";
+                var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+
+                using (var client = new HttpClient())
+                {
+                    var result = await client.PostAsync(new Uri(url), queryString);
+                    string resultContent = await result.Content.ReadAsStringAsync();
+                    var res = JsonConvert.DeserializeObject<LoginResponse[]>(resultContent).ToList();
+                    _attendanceDeviceModel.LoginResponse = res;
+
+                    if (res != null && res.Any())
+                    {
+                        var userManagement = new UserManagement(_attendanceDeviceModel, attendanceDeviceDriver, _serviceStatus, OnThrowingMessage);
+                        bool isSuc = userManagement.UnRegisterUser();
+                        OnThrowingMessage("In-Active Users Done Successfully", MessageType.Info);
+                    }
+                    else
+                    {
+                        OnThrowingMessage("No record found to In-Active users", MessageType.Info);
+                    }
+                }
+            }
+        }
+
+        private void SyncAttendance()
+        {
+            if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+                return;
+
+            while (_serviceStatus.IsRunning)
+            {
+                var attendanceManagement = new AttendanceManagement(_attendanceDeviceModel, attendanceDeviceDriver, OnThrowingMessage);
+                attendanceManagement.UpdateAttendance();
+            }
+        }
+
+=======
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
         [STAThread]
         private async void DeviceSync()
         {
             //starting thread
             string info = "Service Started at: " + DateTime.Now.ToString(BusinessRules.DateTimeFormat);
+<<<<<<< HEAD
+            // Log.Info(info);
+            OnThrowingMessage(info, MessageType.Important);
+
+            while (_serviceStatus.IsRunning)
+=======
 
             OnThrowingMessage(info, MessageType.Important);
 
             while (_syncStatus.IsRunning)
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
             {
                 try
                 {
                     //get data from online
+<<<<<<< HEAD
+                    OnThrowingMessage("Try to get data from online", MessageType.Info);
+=======
                     OnThrowingMessage("Try to get active member from online", MessageType.Info);
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
 
                     var obj = new Dictionary<string, string>();
                     obj.Add("gymid", Settings.Default.BranchId.ToString());
                     var data = JsonConvert.SerializeObject(obj);
                     var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
                     var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+<<<<<<< HEAD
+                    List<ActiveUserResponse> response = null;
+                    using (var client = new HttpClient())
+                    {
+                        var result = await client.PostAsync(new Uri(url), queryString);
+                        string resultContent = await result.Content.ReadAsStringAsync();
+                        response = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent).ToList();
+
+                    }
+
+                    if (response == null)
+                    {
+                        OnThrowingMessage("Failed to get data from online", MessageType.Error);
+                    }
+                    else
+                    {
+                        _serverCallingTimeInterval = MinuteToSec * 5;
+                        _attendanceDeviceModel.TeamMembers = response;
+                        SyncOperation(_attendanceDeviceModel);
+
+                    }
+=======
                     try
                     {
 
@@ -311,6 +409,7 @@ namespace AttendanceApp.Services
                         OnThrowingMessage("Api Not responding properly!" + url, MessageType.Error);
                     }
 
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
 
                     OnThrowingMessage("Next Sync Time: " + DateTime.Now.AddSeconds(_serverCallingTimeInterval).ToString(BusinessRules.DateTimeFormat), MessageType.Important);
                     SafeSleep(_serverCallingTimeInterval);
@@ -329,9 +428,15 @@ namespace AttendanceApp.Services
             }
 
             //stoping thread
+<<<<<<< HEAD
+            info = "Service Stopped at: " + DateTime.Now.ToString(BusinessRules.DateTimeFormat);
+
+            OnThrowingMessage(info, MessageType.Important); Console.WriteLine("after execution !");
+=======
             // info = "Service Stopped at: " + DateTime.Now.ToString(BusinessRules.DateTimeFormat);
 
             //OnThrowingMessage(info, MessageType.Important); Console.WriteLine("after execution !");
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
         }
 
         private void SyncOperation(AttendanceDeviceModel attendanceDeviceModel)
@@ -353,7 +458,7 @@ namespace AttendanceApp.Services
 
                 #region UserManagement
 
-                var userManagement = new UserManagement(attendanceDeviceModel, attendanceDeviceDriver, _serviceStatus, _syncStatus, OnThrowingMessage);
+                var userManagement = new UserManagement(attendanceDeviceModel, attendanceDeviceDriver, _serviceStatus, OnThrowingMessage);
                 bool isSuc = userManagement.RegisterUser();
 
                 if (!isSuc) return;
@@ -377,6 +482,8 @@ namespace AttendanceApp.Services
             catch (Exception e) { }
         }
 
+<<<<<<< HEAD
+=======
         [STAThread]
         private async void InActiveUser()
         {
@@ -401,7 +508,7 @@ namespace AttendanceApp.Services
 
                     if (res != null && res.Any())
                     {
-                        var userManagement = new UserManagement(_attendanceDeviceModel, attendanceDeviceDriver, _serviceStatus, _syncStatus, OnThrowingMessage);
+                        var userManagement = new UserManagement(_attendanceDeviceModel, attendanceDeviceDriver, _serviceStatus, OnThrowingMessage);
                         bool isSuc = userManagement.UnRegisterUser();
                         OnThrowingMessage("In-Active Users Done Successfully", MessageType.Info);
                     }
@@ -429,22 +536,7 @@ namespace AttendanceApp.Services
             }
         }
 
-        [STAThread]
-        private void DeleteAttendance()
-        {
-            attendanceDeviceDriver = AttendanceDeviceDriverFactory(ConfigurationManager.AppSettings["deviceTypeCode"].ToString());
-            if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
-                return;
-
-            while (_serviceStatus.IsRunning)
-            {
-                var attendanceManagement = new AttendanceManagement(_attendanceDeviceModel, attendanceDeviceDriver, OnThrowingMessage);
-                attendanceManagement.DeleteAttendance();
-                _serviceStatus.IsRunning = false;
-            }
-        }
-
-
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
         public IAttendanceDeviceDriver AttendanceDeviceDriverFactory(string deviceType)
         {
             if (deviceType.Equals(DeviceType.ColoredDevice, StringComparison.CurrentCultureIgnoreCase))
@@ -468,8 +560,11 @@ namespace AttendanceApp.Services
     {
         public volatile bool IsRunning = false;
     }
+<<<<<<< HEAD
+=======
     public class SyncStatus
     {
         public volatile bool IsRunning = false;
     }
+>>>>>>> d456686be0805f8de294a31789d9df9ab2cd431e
 }

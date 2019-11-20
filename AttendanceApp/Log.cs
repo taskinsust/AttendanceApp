@@ -205,23 +205,41 @@ namespace AttendanceApp
             var answer = MessageBox.Show("Are you sure to delete all attendance log?", "Yes/no sample", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (answer == DialogResult.Yes)
             {
-                var thread = new Thread(() =>
-                {
-                    _czkem = new CZKEM();
-                    var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                    if (connect)
-                        _device.IsConDevice = true;
-                    if (_device.IsConDevice)
-                    {
-                        _czkem.ClearGLog(1);
-                        _czkem.RefreshData(1);
-                        fillListView("Attendance Log Deleted from Device Sucessfully", 0);
-                    }
-                    //Application.Run();
-                });
-                thread.IsBackground = true;
-                thread.SetApartmentState(ApartmentState.STA);
-                thread.Start();
+                btnActive.Enabled = true;
+                btnDeActive.Enabled = true;
+                btnSyncAttendance.Enabled = true;
+                btnDeleteAttendanceLog.Enabled = false;
+
+                OnGuiMessaging("Delete Button has pressed", MessageType.Info);
+
+                AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
+                attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
+                attendanceDeviceModel.IPAddress = _device.DeviceIp;
+                attendanceDeviceModel.Port = _device.Port;
+                attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
+                attendanceDeviceModel.Id = _device.DeviceId;
+
+                syncThread = null;
+                syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
+                syncThread.StartDeleteAttendance();
+
+                //var thread = new Thread(() =>
+                //{
+                //    _czkem = new CZKEM();
+                //    var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+                //    if (connect)
+                //        _device.IsConDevice = true;
+                //    if (_device.IsConDevice)
+                //    {
+                //        _czkem.ClearGLog(1);
+                //        _czkem.RefreshData(1);
+                //        fillListView("Attendance Log Deleted from Device Sucessfully", 0);
+                //    }
+                //    //Application.Run();
+                //});
+                //thread.IsBackground = true;
+                //thread.SetApartmentState(ApartmentState.STA);
+                //thread.Start();
             }
         }
 
@@ -231,6 +249,7 @@ namespace AttendanceApp
             Settings.Default.BranchId = -1;
             Settings.Default.Mode = "nutural";
             Settings.Default.Save();
+
             Application.Exit();
         }
 
@@ -238,299 +257,297 @@ namespace AttendanceApp
 
         #region Timer Tick Events
 
-        private void refreshUsersAndData_Tick(object sender, EventArgs e)
-        {
-            RefreshUserAndData();
-        }
+        //private void refreshUsersAndData_Tick(object sender, EventArgs e)
+        //{
+        //    RefreshUserAndData();
+        //}
 
-        private void MyTimer_Tick(object sender, System.EventArgs e)
-        {
-            ActiveUser();
-            InActiveUser();
-            myTimer.Stop();
-        }
+        //private void MyTimer_Tick(object sender, System.EventArgs e)
+        //{
+        //    ActiveUser();
+        //    InActiveUser();
+        //    myTimer.Stop();
+        //}
 
-        private void RefreshUserAndData()
-        {
-            ActiveUser();
-            InActiveUser();
-            SyncAttendance();
-        }
+        //private void RefreshUserAndData()
+        //{
+        //    ActiveUser();
+        //    InActiveUser();
+        //    SyncAttendance();
+        //}
 
         #endregion
-
 
         #region Click Operations
 
-        private async void ActiveUser()
-        {
-            btnActive.Enabled = false;
-            bool isEnabled = true;
-            bool returnResult = false, isExitToDevice = false;
-            var thread = new Thread(async () =>
-          {
-              try
-              {
-                  var obj = new Dictionary<string, string>();
-                  obj.Add("gymid", Settings.Default.BranchId.ToString());
-                  var data = JsonConvert.SerializeObject(obj);
-                  var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
-                  var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
-                  using (var client = new HttpClient())
-                  {
-                      //var result = await client.PostAsync(new Uri(url), queryString);
-                      //string resultContent = await result.Content.ReadAsStringAsync();
-                      // var res = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent);
+        //private async void ActiveUser()
+        //{
+        //    btnActive.Enabled = false;
+        //    bool isEnabled = true;
+        //    bool returnResult = false, isExitToDevice = false;
+        //    var thread = new Thread(async () =>
+        //  {
+        //      try
+        //      {
+        //          var obj = new Dictionary<string, string>();
+        //          obj.Add("gymid", Settings.Default.BranchId.ToString());
+        //          var data = JsonConvert.SerializeObject(obj);
+        //          var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/getbackupactivemembers";
+        //          var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+        //          using (var client = new HttpClient())
+        //          {
+        //              //var result = await client.PostAsync(new Uri(url), queryString);
+        //              //string resultContent = await result.Content.ReadAsStringAsync();
+        //              // var res = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent);
 
-                      //For Debug Purpose Only
-                      string resultContent = ServerResponseForActiveUserResponseModel();
-                      var res = JsonConvert.DeserializeObject<List<ActiveUserResponse>>(resultContent);
-                      if (res != null && res.Any())
-                      {
-                          _czkem = new CZKEM();
-                          _czkem.SetCommPassword(_device.CommPassword);
-                          var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                          if (connect)
-                              _device.IsConDevice = true;
-                          if (_device.IsConDevice)
-                          {
-                              await fillListView("Device connected Successfully.", 0);
-                              foreach (var item in res)
-                              {
-                                  //User registered using both Card and Thumb
-                                  if (!String.IsNullOrEmpty(item.cardNumber))
-                                  {
-                                      bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
-                                      if (isSet)
-                                      {
-                                          if (isEnabled)
-                                              returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
-                                      }
-                                  }
-                                  if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
-                                  {
-                                      var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
-                                  }
-                              }
-                              await fillListView("Active Users Done Successfully.", 0);
-                          }
-                      }
-                      else
-                      {
-                          await fillListView("No record found to Active users.", 0);
-                      }
-                  }
-              }
-              catch (Exception)
-              {
+        //              //For Debug Purpose Only
+        //              string resultContent = ServerResponseForActiveUserResponseModel();
+        //              var res = JsonConvert.DeserializeObject<List<ActiveUserResponse>>(resultContent);
+        //              if (res != null && res.Any())
+        //              {
+        //                  _czkem = new CZKEM();
+        //                  _czkem.SetCommPassword(_device.CommPassword);
+        //                  var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+        //                  if (connect)
+        //                      _device.IsConDevice = true;
+        //                  if (_device.IsConDevice)
+        //                  {
+        //                      await fillListView("Device connected Successfully.", 0);
+        //                      foreach (var item in res)
+        //                      {
+        //                          //User registered using both Card and Thumb
+        //                          if (!String.IsNullOrEmpty(item.cardNumber))
+        //                          {
+        //                              bool isSet = _czkem.SetStrCardNumber(item.cardNumber);
+        //                              if (isSet)
+        //                              {
+        //                                  if (isEnabled)
+        //                                      returnResult = _czkem.SSR_SetUserInfo(1, item.member_id, item.userName, "", 0, isEnabled);
+        //                              }
+        //                          }
+        //                          if (_czkem.SSR_SetUserInfo(1, item.member_id, "", "", 0, true))
+        //                          {
+        //                              var enable = _czkem.SetUserTmpExStr(1, item.member_id, item.fingerIndex, 1, item.templateData);
+        //                          }
+        //                      }
+        //                      await fillListView("Active Users Done Successfully.", 0);
+        //                  }
+        //              }
+        //              else
+        //              {
+        //                  await fillListView("No record found to Active users.", 0);
+        //              }
+        //          }
+        //      }
+        //      catch (Exception)
+        //      {
 
-              }
-              btnActive.Enabled = true;
-          });
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-        }
+        //      }
+        //      btnActive.Enabled = true;
+        //  });
+        //    thread.IsBackground = true;
+        //    thread.SetApartmentState(ApartmentState.STA);
+        //    thread.Start();
+        //}
 
-        private void InActiveUser()
-        {
-            btnDeActive.Enabled = false;
-            var thread = new Thread(async () =>
-            {
-                var obj = new Dictionary<string, string>();
-                obj.Add("gymid", Settings.Default.BranchId.ToString());
-                var data = JsonConvert.SerializeObject(obj);
-                var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/GetInactiveMembers";
-                var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
-                using (var client = new HttpClient())
-                {
-                    var result = await client.PostAsync(new Uri(url), queryString);
-                    string resultContent = await result.Content.ReadAsStringAsync();
-                    var res = JsonConvert.DeserializeObject<LoginResponse[]>(resultContent);
-                    if (res != null && res.Any())
-                    {
-                        _czkem = new CZKEM();
-                        var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                        if (connect)
-                            _device.IsConDevice = true;
-                        if (_device.IsConDevice)
-                        {
-                            _czkem.ReadAllTemplate(_device.DeviceId);
+        //private void InActiveUser()
+        //{
+        //    btnDeActive.Enabled = false;
+        //    var thread = new Thread(async () =>
+        //    {
+        //        var obj = new Dictionary<string, string>();
+        //        obj.Add("gymid", Settings.Default.BranchId.ToString());
+        //        var data = JsonConvert.SerializeObject(obj);
+        //        var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/GetInactiveMembers";
+        //        var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+        //        using (var client = new HttpClient())
+        //        {
+        //            var result = await client.PostAsync(new Uri(url), queryString);
+        //            string resultContent = await result.Content.ReadAsStringAsync();
+        //            var res = JsonConvert.DeserializeObject<LoginResponse[]>(resultContent);
+        //            if (res != null && res.Any())
+        //            {
+        //                _czkem = new CZKEM();
+        //                var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+        //                if (connect)
+        //                    _device.IsConDevice = true;
+        //                if (_device.IsConDevice)
+        //                {
+        //                    _czkem.ReadAllTemplate(_device.DeviceId);
 
-                            string sTmpData = string.Empty;
-                            int iTmpLength = 0, iFlag = 0;
+        //                    string sTmpData = string.Empty;
+        //                    int iTmpLength = 0, iFlag = 0;
 
-                            foreach (var item in res)
-                            {
-                                for (int i = 0; i <= 9; i++)
-                                {
-                                    if (_czkem.GetUserTmpExStr(_device.DeviceId, item.id, i, out iFlag, out sTmpData, out iTmpLength))
-                                    {
-                                        var sendData = new SaveApiTemplate
-                                        {
-                                            gymid = Settings.Default.BranchId,
-                                            BackUpTemplate = new List<BackUpTemplate>
-                                            {
-                                                new BackUpTemplate
-                                                {
-                                                    name = "",
-                                                    member_id = item.id,
-                                                    Password = "",
-                                                    prvlg = 1,
-                                                    enabled = 1,
-                                                    fingerIndex = i,
-                                                    flag = iFlag,
-                                                    templateData = sTmpData
+        //                    foreach (var item in res)
+        //                    {
+        //                        for (int i = 0; i <= 9; i++)
+        //                        {
+        //                            if (_czkem.GetUserTmpExStr(_device.DeviceId, item.id, i, out iFlag, out sTmpData, out iTmpLength))
+        //                            {
+        //                                var sendData = new SaveApiTemplate
+        //                                {
+        //                                    gymid = Settings.Default.BranchId,
+        //                                    BackUpTemplate = new List<BackUpTemplate>
+        //                                    {
+        //                                        new BackUpTemplate
+        //                                        {
+        //                                            name = "",
+        //                                            member_id = item.id,
+        //                                            Password = "",
+        //                                            prvlg = 1,
+        //                                            enabled = 1,
+        //                                            fingerIndex = i,
+        //                                            flag = iFlag,
+        //                                            templateData = sTmpData
 
-                                                }
-                                            }
-                                        };
-                                        SendTemplateBackUpToAPI(sendData);
-                                        _czkem.SSR_DelUserTmp(_device.DeviceId, item.id, i);
-                                    }
-                                }
-                            }
-                        }
+        //                                        }
+        //                                    }
+        //                                };
+        //                                SendTemplateBackUpToAPI(sendData);
+        //                                _czkem.SSR_DelUserTmp(_device.DeviceId, item.id, i);
+        //                            }
+        //                        }
+        //                    }
+        //                }
 
-                        await fillListView("In-Active Users Done Successfully", 0);
-                    }
-                    else
-                    {
-                        await fillListView("No record found to In-Active users", 0);
-                    }
-                }
-                btnDeActive.Enabled = true;
-            });
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-        }
+        //                await fillListView("In-Active Users Done Successfully", 0);
+        //            }
+        //            else
+        //            {
+        //                await fillListView("No record found to In-Active users", 0);
+        //            }
+        //        }
+        //        btnDeActive.Enabled = true;
+        //    });
+        //    thread.IsBackground = true;
+        //    thread.SetApartmentState(ApartmentState.STA);
+        //    thread.Start();
+        //}
 
-        private void SyncAttendance()
-        {
-            btnSyncAttendance.Enabled = false;
-            var thread = new Thread(async () =>
-            {
-                tblS.Clear();
-                var dates = new List<DateTime>();
-                var strResetTime = string.Empty;
-                var iGLCount = 0;
-                _czkem = new CZKEM();
-                var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                if (connect)
-                    _device.IsConDevice = true;
-                if (_device.IsConDevice)
-                {
-                    var readLog = _czkem.ReadAllGLogData(1);
-                    if (readLog)
-                    {
-                        //int idwErrorCode = 0;
-                        string sdwEnrollNumber = "";
-                        var idwVerifyMode = 0;
-                        var idwInOutMode = 0;
-                        var idwYear = 0;
-                        var idwMonth = 0;
-                        var idwDay = 0;
-                        var idwHour = 0;
-                        var idwMinute = 0;
-                        var idwSecond = 0;
-                        var idwWorkcode = 0;
-                        while (_czkem.SSR_GetGeneralLogData(_device.DeviceId, out sdwEnrollNumber, out idwVerifyMode,
-                                     out idwInOutMode, out idwYear, out idwMonth, out idwDay, out idwHour,
-                                     out idwMinute, out idwSecond, ref idwWorkcode))
-                        {
-                            double memberId;
-                            if (Double.TryParse(sdwEnrollNumber, out memberId))
-                            {
-                                iGLCount++;
-                                var date = new DateTime(idwYear, idwMonth, idwDay, idwHour, idwMinute, idwSecond);
-                                var dr = tblS.NewRow();
-                                dr["intEmployeeId"] = sdwEnrollNumber;
-                                dr["dtDate"] = date.ToString();
-                                dr["intInOut"] = idwVerifyMode;
-                                dr["intBranchId"] = _device.BranchId;
-                                if (date >= Settings.Default.Date)
-                                {
-                                    if (string.IsNullOrEmpty(strResetTime))
-                                    {
-                                        strResetTime = date.ToString();
-                                    }
-                                    tblS.Rows.Add(dr);
-                                    dates.Add(date);
-                                }
-                            }
-                        }
-                        if (string.IsNullOrEmpty(strResetTime))
-                        {
-                            strResetTime = Settings.Default.Date.ToString();
-                        }
-                        if (dates.Any())
-                        {
-                            Settings.Default.Date = dates.OrderByDescending(x => x).First();
-                        }
-                        //await fillListView("Starting from " + strResetTime + " Compare To " + Settings.Default.Date, 0);
-                        //fillListView("fetched In", iGLCount);
-                        SaveSyncData(tblS);
-                    }
-                    else
-                    {
-                        //await fillListView("No data found from device to sync.", 0);
-                        btnSyncAttendance.Enabled = true;
-                    }
-                }
-            });
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-        }
+        //private void SyncAttendance()
+        //{
+        //    btnSyncAttendance.Enabled = false;
+        //    var thread = new Thread(async () =>
+        //    {
+        //        tblS.Clear();
+        //        var dates = new List<DateTime>();
+        //        var strResetTime = string.Empty;
+        //        var iGLCount = 0;
+        //        _czkem = new CZKEM();
+        //        var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+        //        if (connect)
+        //            _device.IsConDevice = true;
+        //        if (_device.IsConDevice)
+        //        {
+        //            var readLog = _czkem.ReadAllGLogData(1);
+        //            if (readLog)
+        //            {
+        //                //int idwErrorCode = 0;
+        //                string sdwEnrollNumber = "";
+        //                var idwVerifyMode = 0;
+        //                var idwInOutMode = 0;
+        //                var idwYear = 0;
+        //                var idwMonth = 0;
+        //                var idwDay = 0;
+        //                var idwHour = 0;
+        //                var idwMinute = 0;
+        //                var idwSecond = 0;
+        //                var idwWorkcode = 0;
+        //                while (_czkem.SSR_GetGeneralLogData(_device.DeviceId, out sdwEnrollNumber, out idwVerifyMode,
+        //                             out idwInOutMode, out idwYear, out idwMonth, out idwDay, out idwHour,
+        //                             out idwMinute, out idwSecond, ref idwWorkcode))
+        //                {
+        //                    double memberId;
+        //                    if (Double.TryParse(sdwEnrollNumber, out memberId))
+        //                    {
+        //                        iGLCount++;
+        //                        var date = new DateTime(idwYear, idwMonth, idwDay, idwHour, idwMinute, idwSecond);
+        //                        var dr = tblS.NewRow();
+        //                        dr["intEmployeeId"] = sdwEnrollNumber;
+        //                        dr["dtDate"] = date.ToString();
+        //                        dr["intInOut"] = idwVerifyMode;
+        //                        dr["intBranchId"] = _device.BranchId;
+        //                        if (date >= Settings.Default.Date)
+        //                        {
+        //                            if (string.IsNullOrEmpty(strResetTime))
+        //                            {
+        //                                strResetTime = date.ToString();
+        //                            }
+        //                            tblS.Rows.Add(dr);
+        //                            dates.Add(date);
+        //                        }
+        //                    }
+        //                }
+        //                if (string.IsNullOrEmpty(strResetTime))
+        //                {
+        //                    strResetTime = Settings.Default.Date.ToString();
+        //                }
+        //                if (dates.Any())
+        //                {
+        //                    Settings.Default.Date = dates.OrderByDescending(x => x).First();
+        //                }
+        //                //await fillListView("Starting from " + strResetTime + " Compare To " + Settings.Default.Date, 0);
+        //                //fillListView("fetched In", iGLCount);
+        //                SaveSyncData(tblS);
+        //            }
+        //            else
+        //            {
+        //                //await fillListView("No data found from device to sync.", 0);
+        //                btnSyncAttendance.Enabled = true;
+        //            }
+        //        }
+        //    });
+        //    thread.IsBackground = true;
+        //    thread.SetApartmentState(ApartmentState.STA);
+        //    thread.Start();
+        //}
 
         #endregion
 
-
         #region Local Functions
 
-        private async Task fillListView(string act, int total, string ex2 = "")
-        {
-            var thread = new Thread((object val) =>
-            {
-                var param = (FillListViewModel)val;
-                var item1 = new ListViewItem();
-                _count++;
-                var imgList = new ImageList();
-                imgList.Images.Add(Resources.success);
-                imgList.Images.Add(Resources.error);
-                //gridLogDetailsView.SmallImageList = imgList;
-                if (param.act == "error")
-                {
-                    item1.Text = "Error";
-                    item1.SubItems.Add(_count.ToString());
-                    item1.SubItems.Add("Error Occured");
-                    item1.SubItems.Add(DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt"));
-                    item1.SubItems.Add(param.ex2);
-                    item1.ImageIndex = 1;
-                }
-                else
-                {
-                    item1.Text = "Success";
-                    item1.SubItems.Add(_count.ToString());
-                    item1.SubItems.Add(param.act);
-                    item1.SubItems.Add(DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt"));
-                    item1.SubItems.Add(param.ex2);
-                    item1.ImageIndex = 0;
-                }
-                //gridLogDetailsView.Items.Insert(0, item1);
-                //Application.Run();
-            });
-            var obj = new FillListViewModel
-            {
-                act = act,
-                ex2 = ex2,
-                total = total
-            };
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start(obj);
-        }
+        //private async Task fillListView(string act, int total, string ex2 = "")
+        //{
+        //    var thread = new Thread((object val) =>
+        //    {
+        //        var param = (FillListViewModel)val;
+        //        var item1 = new ListViewItem();
+        //        _count++;
+        //        var imgList = new ImageList();
+        //        imgList.Images.Add(Resources.success);
+        //        imgList.Images.Add(Resources.error);
+        //        //gridLogDetailsView.SmallImageList = imgList;
+        //        if (param.act == "error")
+        //        {
+        //            item1.Text = "Error";
+        //            item1.SubItems.Add(_count.ToString());
+        //            item1.SubItems.Add("Error Occured");
+        //            item1.SubItems.Add(DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt"));
+        //            item1.SubItems.Add(param.ex2);
+        //            item1.ImageIndex = 1;
+        //        }
+        //        else
+        //        {
+        //            item1.Text = "Success";
+        //            item1.SubItems.Add(_count.ToString());
+        //            item1.SubItems.Add(param.act);
+        //            item1.SubItems.Add(DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt"));
+        //            item1.SubItems.Add(param.ex2);
+        //            item1.ImageIndex = 0;
+        //        }
+        //        //gridLogDetailsView.Items.Insert(0, item1);
+        //        //Application.Run();
+        //    });
+        //    var obj = new FillListViewModel
+        //    {
+        //        act = act,
+        //        ex2 = ex2,
+        //        total = total
+        //    };
+        //    thread.IsBackground = true;
+        //    thread.SetApartmentState(ApartmentState.STA);
+        //    thread.Start(obj);
+        //}
 
         private void OnMessageCleared()
         {
@@ -609,81 +626,81 @@ namespace AttendanceApp
             }
         }
 
-        private void SaveSyncData(DataTable tblS)
-        {
-            var thread = new Thread(async () =>
-            {
-                var tempEmployeeId = -1;
-                var saveCount = 0;
-                if (tblS != null)
-                {
-                    DateTime dtTempFetch = fetchTime;
-                    var dataView = new DataView(tblS);
-                    dataView.Sort = " dtDate ASC ";
-                    var dtFinal = dataView.ToTable();
-                    if (dtFinal.Rows.Count > 0)
-                    {
-                        for (int i = 0; i < dtFinal.Rows.Count - 1; i++)
-                        {
-                            var row = dtFinal.Rows[i];
-                            tempEmployeeId = Convert.ToInt32(row["intEmployeeId"]);
-                            var atDate = Convert.ToDateTime(row["dtDate"]);
-                            var branchId = Convert.ToInt32(row["intBranchId"]);
-                            if (fetchTime < atDate)
-                            {
-                                var sendData = new SaveAttendanceModel
-                                {
-                                    gymid = Settings.Default.CompanyId,
-                                    attendences = new List<Attendences>
-                            {
-                                new Attendences
-                                {
-                                    date = Convert.ToDateTime(atDate).ToString("yyyy-MM-dd"),
-                                    member_id = tempEmployeeId,
-                                    time = atDate.ToString("HH:mm:ss")
-                                }
-                            }
-                                };
-                                var data = JsonConvert.SerializeObject(sendData);
-                                var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/addattendences";
-                                var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
-                                using (var client = new HttpClient())
-                                {
-                                    var result = await client.PostAsync(new Uri(url), queryString);
-                                    string resultContent = await result.Content.ReadAsStringAsync();
-                                    saveCount++;
-                                    if (Convert.ToDateTime(atDate) > dtTempFetch)
-                                    {
+        //private void SaveSyncData(DataTable tblS)
+        //{
+        //    var thread = new Thread(async () =>
+        //    {
+        //        var tempEmployeeId = -1;
+        //        var saveCount = 0;
+        //        if (tblS != null)
+        //        {
+        //            DateTime dtTempFetch = fetchTime;
+        //            var dataView = new DataView(tblS);
+        //            dataView.Sort = " dtDate ASC ";
+        //            var dtFinal = dataView.ToTable();
+        //            if (dtFinal.Rows.Count > 0)
+        //            {
+        //                for (int i = 0; i < dtFinal.Rows.Count - 1; i++)
+        //                {
+        //                    var row = dtFinal.Rows[i];
+        //                    tempEmployeeId = Convert.ToInt32(row["intEmployeeId"]);
+        //                    var atDate = Convert.ToDateTime(row["dtDate"]);
+        //                    var branchId = Convert.ToInt32(row["intBranchId"]);
+        //                    if (fetchTime < atDate)
+        //                    {
+        //                        var sendData = new SaveAttendanceModel
+        //                        {
+        //                            gymid = Settings.Default.CompanyId,
+        //                            attendences = new List<Attendences>
+        //                    {
+        //                        new Attendences
+        //                        {
+        //                            date = Convert.ToDateTime(atDate).ToString("yyyy-MM-dd"),
+        //                            member_id = tempEmployeeId,
+        //                            time = atDate.ToString("HH:mm:ss")
+        //                        }
+        //                    }
+        //                        };
+        //                        var data = JsonConvert.SerializeObject(sendData);
+        //                        var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/addattendences";
+        //                        var queryString = new StringContent(data, Encoding.UTF8, "text/plain");
+        //                        using (var client = new HttpClient())
+        //                        {
+        //                            var result = await client.PostAsync(new Uri(url), queryString);
+        //                            string resultContent = await result.Content.ReadAsStringAsync();
+        //                            saveCount++;
+        //                            if (Convert.ToDateTime(atDate) > dtTempFetch)
+        //                            {
 
-                                        dtTempFetch = atDate;
-                                    }
-                                    Settings.Default.Date = atDate;
-                                    Settings.Default.Save();
-                                }
-                            }
-                        }
-                        fetchTime = dtTempFetch;
-                        if (saveCount > 0)
-                        {
-                            await fillListView("Attendance saved to the server successfully.", saveCount);
-                        }
-                    }
-                    else
-                    {
-                        await fillListView("No record to perforn sync", 0);
-                    }
-                }
-                else
-                {
-                    await fillListView("No record to perforn sync", 0);
-                }
-                btnSyncAttendance.Enabled = true;
-                //Application.Run();
-            });
-            thread.IsBackground = true;
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-        }
+        //                                dtTempFetch = atDate;
+        //                            }
+        //                            Settings.Default.Date = atDate;
+        //                            Settings.Default.Save();
+        //                        }
+        //                    }
+        //                }
+        //                fetchTime = dtTempFetch;
+        //                if (saveCount > 0)
+        //                {
+        //                    await fillListView("Attendance saved to the server successfully.", saveCount);
+        //                }
+        //            }
+        //            else
+        //            {
+        //                await fillListView("No record to perforn sync", 0);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            await fillListView("No record to perforn sync", 0);
+        //        }
+        //        btnSyncAttendance.Enabled = true;
+        //        //Application.Run();
+        //    });
+        //    thread.IsBackground = true;
+        //    thread.SetApartmentState(ApartmentState.STA);
+        //    thread.Start();
+        //}
 
         #endregion
 
@@ -732,7 +749,6 @@ namespace AttendanceApp
             thread.Start();
         }
 
-
         public static void GlobalHandler(ThreadStart threadStartTarget)
         {
             try
@@ -758,7 +774,6 @@ namespace AttendanceApp
             };
             OpenPopUp(attendance);
         }
-
 
         #region Debug
 
