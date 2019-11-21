@@ -45,7 +45,7 @@ namespace AttendanceApp.Services
         {
             try
             {
-                _attendanceDeviceDriver.Clean();
+                //_attendanceDeviceDriver.Clean();
                 _attendanceDeviceDriver.RefreshData();
 
                 return true;

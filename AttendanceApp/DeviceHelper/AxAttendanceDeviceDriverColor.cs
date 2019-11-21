@@ -48,7 +48,7 @@ namespace AttendanceApp.DeviceHelper
                     }
 
                     if (returnResult)
-                        OnThrowingMessage("Register user " + member.userName + " in device with pin " + member.member_id, MessageType.Info);
+                        OnThrowingMessage("Register user " + member.userName + " in device with id " + member.member_id, MessageType.Info);
                     else
                         OnThrowingMessage("Failed to save user " + member.userName + " in device ", MessageType.Error);
                 }
@@ -59,6 +59,14 @@ namespace AttendanceApp.DeviceHelper
                 //Log.Error(ex);
                 return false;
             }
+        }
+
+        private void DefineTblsFields()
+        {
+            tblS.Columns.Add("intEmployeeId");
+            tblS.Columns.Add("dtDate");
+            tblS.Columns.Add("intInOut");
+            tblS.Columns.Add("intBranchId");
         }
 
         public override void ProcessLogList()
@@ -80,7 +88,7 @@ namespace AttendanceApp.DeviceHelper
             try
             {
                 OnThrowingMessage("Retriving attendance data from device", MessageType.Info);
-
+                DefineTblsFields();
                 //for color
                 while (AxDevice.SSR_GetGeneralLogData(_attendanceDevice.MachineNo, out idwEnrollNumber, out idwVerifyMode, out idwInOutMode,
                     out idwYear, out idwMonth, out idwDay, out idwHour, out idwMinute, out idwSecond, ref idwWorkCode))
@@ -90,6 +98,7 @@ namespace AttendanceApp.DeviceHelper
                     {
                         // iGLCount++;
                         var date = new DateTime(idwYear, idwMonth, idwDay, idwHour, idwMinute, idwSecond);
+                        
 
                         var dr = tblS.NewRow();
                         dr["intEmployeeId"] = idwEnrollNumber;
@@ -180,7 +189,7 @@ namespace AttendanceApp.DeviceHelper
                 var dtFinal = dataView.ToTable();
                 if (dtFinal.Rows.Count > 0)
                 {
-                    for (int i = 0; i < dtFinal.Rows.Count - 1; i++)
+                    for (int i = 0; i <= dtFinal.Rows.Count - 1; i++)
                     {
                         var row = dtFinal.Rows[i];
                         tempEmployeeId = Convert.ToInt32(row["intEmployeeId"]);

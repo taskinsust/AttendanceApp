@@ -19,7 +19,7 @@ namespace AttendanceApp.DeviceHelper
         bool OpenConnection(bool isDeviceLock = true);
         void CloseConnection();
         void RefreshData();
-        bool DeleteFromDevice(LoginResponse memberViewModel,bool useInternalConnection = false, int machineNum = 0);
-        
+        bool InactiveFromDevice(LoginResponse memberViewModel,bool useInternalConnection = false, int machineNum = 0);
+        void RegEvents();
     }
 }

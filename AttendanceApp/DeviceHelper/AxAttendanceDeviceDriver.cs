@@ -1,11 +1,17 @@
 ﻿using AttendanceApp.Helper;
 using AttendanceApp.Models;
+using AttendanceApp.Properties;
 using log4net;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using zkemkeeper;
 
 namespace AttendanceApp.DeviceHelper
@@ -41,7 +47,7 @@ namespace AttendanceApp.DeviceHelper
 
         #region General
 
-        public bool OpenConnection(bool isDeviceLock = true)
+        public bool OpenConnection(bool isDeviceLock = false)
         {
             bool isSuccess = false;
             try
@@ -111,6 +117,81 @@ namespace AttendanceApp.DeviceHelper
             catch (Exception ex)
             {
                 serviceLog.Error(ex);
+            }
+        }
+
+        #endregion
+
+        #region Thumbs Up 
+
+        public void RegEvents()
+        {
+            if (AxDevice.RegEvent(1, 65535))
+            {
+                AxDevice.OnEnrollFingerEx += new _IZKEMEvents_OnEnrollFingerExEventHandler(AxDevice_OnEnrollFingerEx);
+                //AxDevice.OnAttTransactionEx += new _IZKEMEvents_OnAttTransactionExEventHandler(zkemClient_OnAttTransactionEx);
+            }
+        }
+        public void AxDevice_OnEnrollFingerEx(string enroll, int findex, int actionres, int length)
+        {
+
+            MessageBox.Show("Hello");
+        }
+
+        private async void zkemClient_OnAttTransactionEx(string EnrollNumber, int IsInValid, int AttState, int VerifyMethod, int Year, int Month, int Day, int Hour, int Minute, int Second, int WorkCode)
+        {
+            var gymId = Settings.Default.BranchId;
+
+            var obj = new Dictionary<string, string>();
+            obj.Add("gymid", Settings.Default.BranchId.ToString());
+            obj.Add("memberid", EnrollNumber);
+            //var data = JsonConvert.SerializeObject(obj);
+            var url = ConfigurationManager.AppSettings["ApiUrl"].ToString() + "webappservices/meberdetail";
+            //var queryString = new StringContent(data, Encoding.UTF8, @"application/x-www-form-urlencoded");
+            using (var client = new HttpClient())
+            {
+                var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(obj) };
+                var result = await client.SendAsync(req);
+                //var result = await client.PostAsync(new Uri(url), queryString);
+                string resultContent = await result.Content.ReadAsStringAsync();
+                var res = JsonConvert.DeserializeObject<ApiResponseModel>(resultContent);
+                if (res != null && res.memberdetail != null && !string.IsNullOrEmpty(res.memberdetail.name))
+                {
+                    var attendance = new AttendanceModel
+                    {
+                        Fee = res.memberdetail.fees,
+                        FeeDate = res.memberdetail.fee_date,
+                        JoinDate = res.memberdetail.joining_date,
+                        Name = res.memberdetail.name,
+                        Phone = res.memberdetail.phone,
+                        Seconds = res.memberdetail.seconds != null && res.memberdetail.seconds > 0 ? Convert.ToInt32(Second) : 30
+                    };
+                    OpenPopUp(attendance);
+                }
+            }
+        }
+
+        private void OpenPopUp(AttendanceModel attendance)
+        {
+            var thread = new Thread(o => GlobalHandler(() =>
+            {
+                var frmBuild = new Popup(attendance);
+                Application.Run(frmBuild);
+            }));
+            thread.IsBackground = true;
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+        }
+
+        public static void GlobalHandler(ThreadStart threadStartTarget)
+        {
+            try
+            {
+                threadStartTarget.Invoke();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -213,7 +294,7 @@ namespace AttendanceApp.DeviceHelper
             return returnResult;
         }
 
-        public bool DeleteFromDevice(LoginResponse loginResponse, bool useInternalConnection = false, int machineNum = 0)
+        public bool InactiveFromDevice(LoginResponse loginResponse, bool useInternalConnection = false, int machineNum = 0)
         {
             bool returnResult = false;
             //Open Connection if needed

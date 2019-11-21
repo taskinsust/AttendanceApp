@@ -51,7 +51,7 @@ namespace AttendanceApp
             //Control.CheckForIllegalCrossThreadCalls = false;
             InitDevices();
             this.btnActive.PerformClick();
-            //OnVerifyThumb();
+            OnVerifyThumb();
             //DefineTblsFields();
             ////RefreshUserAndData();
             //refreshUsersAndData.Start();
@@ -74,7 +74,9 @@ namespace AttendanceApp
                 DeviceType = "IN",
                 BranchId = -1,
                 DeviceId = 1,
-                CommPassword = 123456
+                CommPassword = 123456,
+                IsConDevice = false
+
             };
         }
 
@@ -102,6 +104,10 @@ namespace AttendanceApp
             thread.IsBackground = true;
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
+
+
+
+
         }
 
         private void DefineTblsFields()
@@ -123,94 +129,57 @@ namespace AttendanceApp
 
         private void btnActive_Click(object sender, EventArgs e)
         {
-            btnActive.Enabled = false;
-            btnDeActive.Enabled = true;
-            btnSyncAttendance.Enabled = true;
-            btnDeleteAttendanceLog.Enabled = true;
-            OnGuiMessaging("Active Button has pressed", MessageType.Info);
-            if (syncThread == null)
+            try
             {
-                //for the first time
-                AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
-                attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
-                attendanceDeviceModel.IPAddress = _device.DeviceIp;
-                attendanceDeviceModel.Port = _device.Port;
-                attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
-                attendanceDeviceModel.Id = _device.DeviceId;
+                btnActive.Enabled = false;
+                btnDeActive.Enabled = true;
+                btnSyncAttendance.Enabled = true;
+                btnDeleteAttendanceLog.Enabled = true;
+                OnGuiMessaging("Active Button has pressed", MessageType.Info);
+                if (syncThread == null)
+                {
+                    //for the first time
+                    AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
+                    attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
+                    attendanceDeviceModel.IPAddress = _device.DeviceIp;
+                    attendanceDeviceModel.Port = _device.Port;
+                    attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
+                    attendanceDeviceModel.Id = _device.DeviceId;
+                    attendanceDeviceModel.MachineNo = 1;
 
-                syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-                syncThread.Start();
+                    syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
+                    syncThread.Start();
+                }
+                else if (syncThread._syncStatus.IsRunning)
+                {
+                    //Stop service first
+                    OnGuiMessaging("Backend Process running.", MessageType.Info);
+                }
+                else
+                {
+                    //just restart 
+                    //_messageCleared();
+                    syncThread.Restart();
+                }
             }
-            else if (syncThread._syncStatus.IsRunning)
+            catch (Exception ex) { serviceLog.Error(ex.Message); }
+            finally
             {
-                //Stop service first
-                OnGuiMessaging("Backend Process running.", MessageType.Info);
+                btnActive.Enabled = true;
             }
-            else
-            {
-                //just restart 
-                //_messageCleared();
-                syncThread.Restart();
-            }
-            // ActiveUser();
+
         }
 
         private void btnDeActive_Click(object sender, EventArgs e)
         {
-            btnActive.Enabled = true;
-            btnDeActive.Enabled = false;
-            btnSyncAttendance.Enabled = true;
-            btnDeleteAttendanceLog.Enabled = true;
-
-            OnGuiMessaging("InActive Button has pressed", MessageType.Info);
-
-            AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
-            attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
-            attendanceDeviceModel.IPAddress = _device.DeviceIp;
-            attendanceDeviceModel.Port = _device.Port;
-            attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
-            attendanceDeviceModel.Id = _device.DeviceId;
-
-            syncThread = null;
-            syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-            syncThread.StartInActiveUser();
-            //InActiveUser();
-        }
-
-        private void btnSyncAttendance_Click(object sender, EventArgs e)
-        {
-            btnActive.Enabled = true;
-            btnDeActive.Enabled = true;
-            btnSyncAttendance.Enabled = false;
-            btnDeleteAttendanceLog.Enabled = true;
-
-            OnGuiMessaging("SyncAttendance Button has pressed", MessageType.Info);
-
-            AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
-            attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
-            attendanceDeviceModel.IPAddress = _device.DeviceIp;
-            attendanceDeviceModel.Port = _device.Port;
-            attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
-            attendanceDeviceModel.Id = _device.DeviceId;
-
-            syncThread = null;
-            syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-            syncThread.StartSyncAttendance();
-
-            //SyncAttendance();
-        }
-
-        private void btnDeleteAttendanceLog_Click(object sender, EventArgs e)
-        {
-            var answer = MessageBox.Show("Are you sure to delete all attendance log?", "Yes/no sample", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (answer == DialogResult.Yes)
+            try
             {
                 btnActive.Enabled = true;
-                btnDeActive.Enabled = true;
+                btnDeActive.Enabled = false;
                 btnSyncAttendance.Enabled = true;
-                btnDeleteAttendanceLog.Enabled = false;
+                btnDeleteAttendanceLog.Enabled = true;
 
-                OnGuiMessaging("Delete Button has pressed", MessageType.Info);
+                OnGuiMessaging("InActive Button has pressed", MessageType.Info);
 
                 AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
                 attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
@@ -221,25 +190,74 @@ namespace AttendanceApp
 
                 syncThread = null;
                 syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
-                syncThread.StartDeleteAttendance();
+                syncThread.StartInActiveUser();
+            }
+            catch (Exception ex) { serviceLog.Error(ex.Message); }
+            finally
+            {
+                btnDeActive.Enabled = true;
+            }
+        }
 
-                //var thread = new Thread(() =>
-                //{
-                //    _czkem = new CZKEM();
-                //    var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
-                //    if (connect)
-                //        _device.IsConDevice = true;
-                //    if (_device.IsConDevice)
-                //    {
-                //        _czkem.ClearGLog(1);
-                //        _czkem.RefreshData(1);
-                //        fillListView("Attendance Log Deleted from Device Sucessfully", 0);
-                //    }
-                //    //Application.Run();
-                //});
-                //thread.IsBackground = true;
-                //thread.SetApartmentState(ApartmentState.STA);
-                //thread.Start();
+        private void btnSyncAttendance_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                btnActive.Enabled = true;
+                btnDeActive.Enabled = true;
+                btnSyncAttendance.Enabled = false;
+                btnDeleteAttendanceLog.Enabled = true;
+
+                OnGuiMessaging("SyncAttendance Button has pressed", MessageType.Info);
+
+                AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
+                attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
+                attendanceDeviceModel.IPAddress = _device.DeviceIp;
+                attendanceDeviceModel.Port = _device.Port;
+                attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
+                attendanceDeviceModel.Id = _device.DeviceId;
+
+                syncThread = null;
+                syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
+                syncThread.StartSyncAttendance();
+            }
+            catch (Exception ex) { serviceLog.Error(ex.Message); }
+            finally
+            {
+                btnSyncAttendance.Enabled = true;
+            }
+        }
+
+        private void btnDeleteAttendanceLog_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var answer = MessageBox.Show("Are you sure to delete all attendance log?", "Yes/no sample", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (answer == DialogResult.Yes)
+                {
+                    btnActive.Enabled = true;
+                    btnDeActive.Enabled = true;
+                    btnSyncAttendance.Enabled = true;
+                    btnDeleteAttendanceLog.Enabled = false;
+
+                    OnGuiMessaging("Delete Button has pressed", MessageType.Info);
+
+                    AttendanceDeviceModel attendanceDeviceModel = new AttendanceDeviceModel();
+                    attendanceDeviceModel.CommunicationKey = _device.CommPassword.ToString();
+                    attendanceDeviceModel.IPAddress = _device.DeviceIp;
+                    attendanceDeviceModel.Port = _device.Port;
+                    attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
+                    attendanceDeviceModel.Id = _device.DeviceId;
+
+                    syncThread = null;
+                    syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
+                    syncThread.StartDeleteAttendance();
+                }
+            }
+            catch (Exception ex) { serviceLog.Error(ex.Message); }
+            finally
+            {
+                btnDeleteAttendanceLog.Enabled = true;
             }
         }
 

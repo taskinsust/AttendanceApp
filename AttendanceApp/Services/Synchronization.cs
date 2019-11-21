@@ -74,6 +74,7 @@ namespace AttendanceApp.Services
                 {
                     _syncStatus.IsRunning = true;
                     _activeThread = new System.Threading.Thread(DeviceSync);
+                    _activeThread.IsBackground = true;
                     _activeThread.SetApartmentState(ApartmentState.STA);
                     _activeThread.Start();
                 }
@@ -164,6 +165,7 @@ namespace AttendanceApp.Services
 
                 _serviceStatus.IsRunning = true;
                 _inactiveThread = new System.Threading.Thread(InActiveUser);
+                _inactiveThread.IsBackground = true;
                 _inactiveThread.SetApartmentState(ApartmentState.STA);
                 _inactiveThread.Start();
             }
@@ -201,6 +203,7 @@ namespace AttendanceApp.Services
 
                 _serviceStatus.IsRunning = true;
                 _SyncThread = new System.Threading.Thread(SyncAttendance);
+                _SyncThread.IsBackground = true;
                 _SyncThread.SetApartmentState(ApartmentState.STA);
                 _SyncThread.Start();
 
@@ -223,7 +226,7 @@ namespace AttendanceApp.Services
                     if (_inactiveThread.IsAlive)
                         _inactiveThread.Join();
                     if (_SyncThread.IsAlive)
-                        _SyncThread.Join();            
+                        _SyncThread.Join();
                 }
                 catch
                 {
@@ -237,6 +240,7 @@ namespace AttendanceApp.Services
 
                 _serviceStatus.IsRunning = true;
                 _deleteDataThread = new System.Threading.Thread(DeleteAttendance);
+                _deleteDataThread.IsBackground = true;
                 _deleteDataThread.SetApartmentState(ApartmentState.STA);
                 _deleteDataThread.Start();
             }
@@ -291,16 +295,16 @@ namespace AttendanceApp.Services
                             var result = await client.PostAsync(new Uri(url), queryString);
                             string resultContent = await result.Content.ReadAsStringAsync();
                             response = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent).ToList();
-
                         }
+
+                         if (response != null && response.Count <= 0)
+                            OnThrowingMessage("There is no new member data from online", MessageType.Important);
 
                         if (response == null)
-                        {
                             OnThrowingMessage("Failed to get data from online", MessageType.Error);
-                        }
                         else
                         {
-                            _serverCallingTimeInterval = MinuteToSec * 5;
+                            _serverCallingTimeInterval = MinuteToSec * 1;
                             _attendanceDeviceModel.TeamMembers = response;
                             SyncOperation(_attendanceDeviceModel);
 
@@ -343,11 +347,17 @@ namespace AttendanceApp.Services
                 if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
                     return;
 
+                #region Thumbs Up
+
+                //attendanceDeviceDriver.RegEvents();
+
+                #endregion
+
                 #region Device Management
 
                 var deviceManagement = new DeviceManagement(attendanceDeviceModel, attendanceDeviceDriver);
                 bool isSuccess = deviceManagement.ReadyDevice();
-                if (!isSuccess) return;
+                //if (!isSuccess) return;
 
                 #endregion
 
@@ -356,7 +366,7 @@ namespace AttendanceApp.Services
                 var userManagement = new UserManagement(attendanceDeviceModel, attendanceDeviceDriver, _serviceStatus, _syncStatus, OnThrowingMessage);
                 bool isSuc = userManagement.RegisterUser();
 
-                if (!isSuc) return;
+                // if (!isSuc) return;
 
                 #endregion
 
@@ -427,6 +437,9 @@ namespace AttendanceApp.Services
                 attendanceManagement.UpdateAttendance();
                 _serviceStatus.IsRunning = false;
             }
+            try { _SyncThread.Abort(); }
+            catch { }
+
         }
 
         [STAThread]

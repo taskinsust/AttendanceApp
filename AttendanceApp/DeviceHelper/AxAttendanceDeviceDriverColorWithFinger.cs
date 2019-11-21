@@ -22,20 +22,22 @@ namespace AttendanceApp.DeviceHelper
             {
                 returnResult = base.Register(member, sPassword, iPrivilege);
 
-                if (returnResult)
+                //if (returnResult)
+                //{
+                for (int fingerIndex = 0; fingerIndex < 10; fingerIndex++)
                 {
-                    for (int fingerIndex = 0; fingerIndex < 10; fingerIndex++)
+                    if (fingerIndex == member.fingerIndex)
                     {
-                        if (fingerIndex == member.fingerIndex)
-                        {
-                            //remove & update finger 
-                            AxDevice.SSR_DelUserTmpExt(_attendanceDevice.MachineNo, member.member_id.ToString(), fingerIndex);
-                            var isSuccess = AxDevice.SetUserTmpExStr(_attendanceDevice.MachineNo, member.member_id, member.fingerIndex, 1, member.templateData);
-                            if (isSuccess)
-                                OnThrowingMessage("Register user " + member.userName + " in device with Finger " + member.member_id, MessageType.Info);
-                        }
+                        //remove & update finger 
+                        AxDevice.SSR_DelUserTmpExt(_attendanceDevice.MachineNo, member.member_id.ToString(), fingerIndex);
+                        var isSuccess = AxDevice.SetUserTmpExStr(_attendanceDevice.MachineNo, member.member_id, member.fingerIndex, 1, member.templateData);
+                        if (isSuccess)
+                            OnThrowingMessage("Register user " + member.userName + " in device with Finger " + member.member_id, MessageType.Info);
+
+                        break;
                     }
                 }
+                //}
                 return returnResult;
             }
             catch (Exception ex)

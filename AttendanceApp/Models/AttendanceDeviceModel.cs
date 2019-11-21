@@ -19,10 +19,9 @@ namespace AttendanceApp.Models
         public int MachineNo { get; set; }
         public List<ActiveUserResponse> TeamMembers { get; set; }
         public List<LoginResponse> LoginResponse { get; set; }
-        // public int VersionNumber { get; set; }
+      
         public bool IsReset { get; set; }
         public string LastUpdateTime { get; set; }
-
         public int BranchId { get; set; }
     }
 }

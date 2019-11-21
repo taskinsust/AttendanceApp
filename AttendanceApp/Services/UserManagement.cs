@@ -91,7 +91,7 @@ namespace AttendanceApp.Services
                     if (_serviceStatus.IsRunning == false)
                         return false;
 
-                    var isSuccess = _attendanceDeviceDriver.DeleteFromDevice(item, false);
+                    var isSuccess = _attendanceDeviceDriver.InactiveFromDevice(item, false);
                     if (isSuccess)
                     {
                         OnThrowingMessage("Member " + item + " operation completed ", MessageType.Success);
