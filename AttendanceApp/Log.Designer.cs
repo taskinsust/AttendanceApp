@@ -43,14 +43,14 @@
             this.lblActions = new System.Windows.Forms.Label();
             this.refreshUsersAndData = new System.Windows.Forms.Timer(this.components);
             this.currentStatedataGridView = new System.Windows.Forms.DataGridView();
-            this.btnDeleteAttendanceLog = new System.Windows.Forms.Button();
-            this.btnSyncAttendance = new System.Windows.Forms.Button();
-            this.btnDeActive = new System.Windows.Forms.Button();
-            this.btnActive = new System.Windows.Forms.Button();
             this.sr = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.LogDetails = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.CurrentDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Status = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.btnDeleteAttendanceLog = new System.Windows.Forms.Button();
+            this.btnSyncAttendance = new System.Windows.Forms.Button();
+            this.btnDeActive = new System.Windows.Forms.Button();
+            this.btnActive = new System.Windows.Forms.Button();
             this.GroupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.currentStatedataGridView)).BeginInit();
             this.SuspendLayout();
@@ -60,7 +60,7 @@
             this.btnLogOut.BackColor = System.Drawing.Color.Black;
             this.btnLogOut.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnLogOut.ForeColor = System.Drawing.Color.White;
-            this.btnLogOut.Location = new System.Drawing.Point(870, 36);
+            this.btnLogOut.Location = new System.Drawing.Point(870, 40);
             this.btnLogOut.Name = "btnLogOut";
             this.btnLogOut.Size = new System.Drawing.Size(100, 35);
             this.btnLogOut.TabIndex = 88;
@@ -224,7 +224,6 @@
             // refreshUsersAndData
             // 
             this.refreshUsersAndData.Interval = 900000;
-            //this.refreshUsersAndData.Tick += new System.EventHandler(this.refreshUsersAndData_Tick);
             // 
             // currentStatedataGridView
             // 
@@ -238,6 +237,30 @@
             this.currentStatedataGridView.Name = "currentStatedataGridView";
             this.currentStatedataGridView.Size = new System.Drawing.Size(968, 400);
             this.currentStatedataGridView.TabIndex = 89;
+            // 
+            // sr
+            // 
+            this.sr.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.sr.HeaderText = "Sr #";
+            this.sr.Name = "sr";
+            // 
+            // LogDetails
+            // 
+            this.LogDetails.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.LogDetails.HeaderText = "Log Details";
+            this.LogDetails.Name = "LogDetails";
+            // 
+            // CurrentDate
+            // 
+            this.CurrentDate.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.CurrentDate.HeaderText = "Date & Time";
+            this.CurrentDate.Name = "CurrentDate";
+            // 
+            // Status
+            // 
+            this.Status.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.Status.HeaderText = "Status";
+            this.Status.Name = "Status";
             // 
             // btnDeleteAttendanceLog
             // 
@@ -296,30 +319,6 @@
             this.btnActive.TabIndex = 84;
             this.btnActive.UseVisualStyleBackColor = false;
             this.btnActive.Click += new System.EventHandler(this.btnActive_Click);
-            // 
-            // sr
-            // 
-            this.sr.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.sr.HeaderText = "Sr #";
-            this.sr.Name = "sr";
-            // 
-            // LogDetails
-            // 
-            this.LogDetails.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.LogDetails.HeaderText = "Log Details";
-            this.LogDetails.Name = "LogDetails";
-            // 
-            // CurrentDate
-            // 
-            this.CurrentDate.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.CurrentDate.HeaderText = "Date & Time";
-            this.CurrentDate.Name = "CurrentDate";
-            // 
-            // Status
-            // 
-            this.Status.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Status.HeaderText = "Status";
-            this.Status.Name = "Status";
             // 
             // Log
             // 

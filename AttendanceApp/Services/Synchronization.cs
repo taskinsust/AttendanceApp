@@ -297,7 +297,7 @@ namespace AttendanceApp.Services
                             response = JsonConvert.DeserializeObject<ActiveUserResponse[]>(resultContent).ToList();
                         }
 
-                         if (response != null && response.Count <= 0)
+                        if (response != null && response.Count <= 0)
                             OnThrowingMessage("There is no new member data from online", MessageType.Important);
 
                         if (response == null)
@@ -344,7 +344,10 @@ namespace AttendanceApp.Services
             try
             {
                 attendanceDeviceDriver = AttendanceDeviceDriverFactory(ConfigurationManager.AppSettings["deviceTypeCode"].ToString());
-                if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+                //if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+                //    return;
+
+                if (attendanceDeviceDriver == null)
                     return;
 
                 #region Thumbs Up
@@ -391,9 +394,10 @@ namespace AttendanceApp.Services
         private async void InActiveUser()
         {
             attendanceDeviceDriver = AttendanceDeviceDriverFactory(ConfigurationManager.AppSettings["deviceTypeCode"].ToString());
-            if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+            //if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+            //    return;
+            if (attendanceDeviceDriver == null)
                 return;
-
             while (_serviceStatus.IsRunning)
             {
                 var obj = new Dictionary<string, string>();
@@ -428,7 +432,10 @@ namespace AttendanceApp.Services
         private void SyncAttendance()
         {
             attendanceDeviceDriver = AttendanceDeviceDriverFactory(ConfigurationManager.AppSettings["deviceTypeCode"].ToString());
-            if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+            //if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+            //    return;
+
+            if (attendanceDeviceDriver == null)
                 return;
 
             while (_serviceStatus.IsRunning)
@@ -445,16 +452,23 @@ namespace AttendanceApp.Services
         [STAThread]
         private void DeleteAttendance()
         {
-            attendanceDeviceDriver = AttendanceDeviceDriverFactory(ConfigurationManager.AppSettings["deviceTypeCode"].ToString());
-            if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
-                return;
 
+            attendanceDeviceDriver = AttendanceDeviceDriverFactory(ConfigurationManager.AppSettings["deviceTypeCode"].ToString());
+            //if (attendanceDeviceDriver == null || attendanceDeviceDriver.OpenConnection() == false)
+            //    return;
+            if (attendanceDeviceDriver == null)
+                return;
             while (_serviceStatus.IsRunning)
             {
                 var attendanceManagement = new AttendanceManagement(_attendanceDeviceModel, attendanceDeviceDriver, OnThrowingMessage);
                 attendanceManagement.DeleteAttendance();
                 _serviceStatus.IsRunning = false;
             }
+
+            Thread.Sleep(10000);
+            this.Restart();
+            //try { _deleteDataThread.Abort(); }
+            //catch { }
         }
 
 

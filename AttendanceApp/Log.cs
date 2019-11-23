@@ -80,11 +80,19 @@ namespace AttendanceApp
             };
         }
 
+        private void bio_OnAttTransactionEx(string EnrollNumber, int IsInValid, int AttState, int VerifyMethod, int Year, int Month, int Day,
+int Hour, int Minute, int Second, int WorkCode)
+        {
+            MessageBox.Show("bio_OnAttTransactionEx");
+        }
+
         private void OnVerifyThumb()
         {
             var thread = new Thread(o => GlobalHandler(() =>
            {
                var _czkem1 = new CZKEM();
+               _czkem1.SetCommPassword(Convert.ToInt32(_device.CommPassword));
+
                if (!_device.IsConDevice)
                {
 
@@ -92,6 +100,7 @@ namespace AttendanceApp
                    if (connect)
                        _device.IsConDevice = true;
                }
+
                if (_device.IsConDevice)
                {
                    if (_czkem1.RegEvent(1, 65535))
@@ -104,9 +113,6 @@ namespace AttendanceApp
             thread.IsBackground = true;
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
-
-
-
 
         }
 
@@ -187,6 +193,7 @@ namespace AttendanceApp
                 attendanceDeviceModel.Port = _device.Port;
                 attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
                 attendanceDeviceModel.Id = _device.DeviceId;
+                attendanceDeviceModel.MachineNo = 1;
 
                 syncThread = null;
                 syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
@@ -216,6 +223,7 @@ namespace AttendanceApp
                 attendanceDeviceModel.Port = _device.Port;
                 attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
                 attendanceDeviceModel.Id = _device.DeviceId;
+                attendanceDeviceModel.MachineNo = 1;
 
                 syncThread = null;
                 syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
@@ -232,6 +240,28 @@ namespace AttendanceApp
         {
             try
             {
+                ////var answer = MessageBox.Show("Are you sure to delete all attendance log?", "Yes/no sample", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                ////if (answer == DialogResult.Yes)
+                ////{
+                ////    var thread = new Thread(() =>
+                ////    {
+                ////        _czkem = new CZKEM();
+                ////        //var connect = _czkem.Connect_Net(_device.DeviceIp, _device.Port);
+                ////        //if (connect)
+                ////        _device.IsConDevice = true;
+                ////        if (_device.IsConDevice)
+                ////        {
+                ////            _czkem.ClearGLog(1);
+                ////            _czkem.RefreshData(1);
+                ////            OnGuiMessaging("Log Cleared Successfully", MessageType.Success);
+                ////        }
+                ////        //Application.Run();
+                ////    });
+                ////    thread.IsBackground = true;
+                ////    thread.SetApartmentState(ApartmentState.STA);
+                ////    thread.Start();
+                ////}
+
                 var answer = MessageBox.Show("Are you sure to delete all attendance log?", "Yes/no sample", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (answer == DialogResult.Yes)
                 {
@@ -248,13 +278,17 @@ namespace AttendanceApp
                     attendanceDeviceModel.Port = _device.Port;
                     attendanceDeviceModel.DeviceModelNo = _device.DeviceName;
                     attendanceDeviceModel.Id = _device.DeviceId;
+                    attendanceDeviceModel.MachineNo = 1;
 
                     syncThread = null;
                     syncThread = new Synchronization(OnGuiMessaging, attendanceDeviceModel);
                     syncThread.StartDeleteAttendance();
                 }
             }
-            catch (Exception ex) { serviceLog.Error(ex.Message); }
+            catch (Exception ex)
+            {
+                serviceLog.Error(ex.Message);
+            }
             finally
             {
                 btnDeleteAttendanceLog.Enabled = true;
